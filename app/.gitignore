@@ -1,0 +1,99 @@
+# Built application files
+*.apk
+*.ap_
+*.aab
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
+bin/
+gen/
+out/
+release/
+
+# Gradle files
+.gradle/
+build/
+/*/build/
+
+# Local configuration file
+local.properties
+
+# Android Studio
+.idea/
+*.iml
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/gradle.xml
+.idea/assetWizardSettings.xml
+.idea/dictionaries
+.idea/libraries
+.idea/jarRepositories.xml
+.idea/compiler.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/navEditor.xml
+.idea/caches/
+.idea/.name
+
+# Keystore files
+*.jks
+*.keystore
+
+# External native build
+.externalNativeBuild
+.cxx/
+
+# Google Services (if using Firebase)
+google-services.json
+
+# Version control
+*.orig
+*.rej
+
+# OS files
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# Logs
+*.log
+
+# IntelliJ
+*.iws
+/out/
+
+# Misc
+*.swp
+*~.nib
+captures/
+.signing/
+proguard/
+
+# Backup files
+*.bak
+*.backup
+
+# Lint
+lint/
+
+# Navigation
+.navigation/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output

@@ -1,9 +1,13 @@
 package hcmute.edu.vn.ticktick.database;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-
+import hcmute.edu.vn.ticktick.models.Task;
+import android.database.Cursor;
+import java.util.ArrayList;
+import java.util.List;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     // Tên cơ sở dữ liệu và phiên bản
@@ -78,5 +82,62 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_TASK);
         // Tạo lại bảng mới
         onCreate(db);
+    }
+    // Hàm thêm một Task mới vào Database
+    public long addTask(Task task) {
+        // 1. Mở kết nối với Database ở chế độ Ghi (Writable) để có thể thêm dữ liệu
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        // 2. Tạo một đối tượng ContentValues.
+        // Nó giống như một cái giỏ hàng, bạn bỏ từng món (cột, giá trị) vào giỏ.
+        ContentValues values = new ContentValues();
+
+        // 3. Bỏ dữ liệu vào giỏ. Cú pháp: put("Tên_Cột", Giá_trị)
+        values.put(COLUMN_TASK_TITLE, task.getTitle()); // Thêm tiêu đề
+        values.put(COLUMN_TASK_DESC, task.getDescription()); // Thêm mô tả
+        // (Tạm thời chúng ta thêm Tiêu đề và Mô tả trước cho dễ hiểu, ngày tháng có thể update sau)
+
+        // 4. Thực hiện lệnh insert (chèn) cái "giỏ hàng" đó vào bảng TABLE_TASK.
+        // Hàm insert sẽ trả về ID của dòng mới được thêm, hoặc -1 nếu bị lỗi.
+        long id = db.insert(TABLE_TASK, null, values);
+
+        // 5. Đóng kết nối Database lại để giải phóng bộ nhớ (Rất quan trọng)
+        db.close();
+
+        // 6. Trả về ID để biết là thêm thành công hay thất bại
+        return id;
+    }
+    // Hàm lấy toàn bộ danh sách công việc
+    public List<Task> getAllTasks() {
+        List<Task> taskList = new ArrayList<>(); // Tạo một mảng rỗng để chứa dữ liệu
+
+        // Câu lệnh SQL: Lấy tất cả (*) từ bảng Task
+        String selectQuery = "SELECT * FROM " + TABLE_TASK;
+
+        // Mở database ở chế độ Đọc (Readable)
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        // Cursor giống như một mũi tên trỏ vào từng dòng kết quả trong bảng Excel
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        // Nếu mũi tên trỏ được vào dòng đầu tiên (nghĩa là có dữ liệu)
+        if (cursor.moveToFirst()) {
+            do {
+                Task task = new Task();
+                task.setId(cursor.getInt(0)); // Cột 0 là ID
+                task.setTitle(cursor.getString(1)); // Cột 1 là Tiêu đề
+                task.setDescription(cursor.getString(2)); // Cột 2 là Mô tả
+                task.setStartDate(cursor.getString(3)); // Cột 3 là Ngày bắt đầu
+                task.setEndDate(cursor.getString(4)); // Cột 4 là Ngày kết thúc
+                // Cột 5 là isCompleted (Lưu 0 hoặc 1), nếu == 1 thì là true (đã xong)
+                task.setCompleted(cursor.getInt(5) == 1);
+
+                taskList.add(task); // Nhét công việc vừa lấy được vào mảng
+            } while (cursor.moveToNext()); // Tiếp tục nhảy xuống dòng tiếp theo
+        }
+
+        cursor.close(); // Dùng xong mũi tên thì đóng lại cho đỡ tốn RAM
+        db.close();     // Đóng database
+        return taskList; // Trả về mảng chứa toàn bộ công việc
     }
 }

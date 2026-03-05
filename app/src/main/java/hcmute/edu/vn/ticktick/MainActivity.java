@@ -6,7 +6,17 @@ import androidx.fragment.app.FragmentTransaction;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
+import android.app.Dialog;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
+import android.widget.TextView;
 
+import hcmute.edu.vn.ticktick.database.DatabaseHelper;
+import hcmute.edu.vn.ticktick.models.Task;
 public class MainActivity extends AppCompatActivity {
 
     public int currentMenuSelection = 0;
@@ -55,6 +65,16 @@ public class MainActivity extends AppCompatActivity {
                 loadFragment(new CalendarFragment());
             }
         });
+        // 1. Tìm nút dấu +
+        ImageView btnAddTask = findViewById(R.id.btn_add_task);
+
+        // 2. Gắn sự kiện khi bấm nút +
+        btnAddTask.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showAddTaskDialog(); // Gọi hàm mở hộp thoại
+            }
+        });
     }
 
     // Các hàm phụ trợ chuyển đổi màn hình
@@ -77,5 +97,84 @@ public class MainActivity extends AppCompatActivity {
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(R.id.fragment_container, fragment);
         transaction.commit();
+    }
+    // --- HÀM HIỂN THỊ HỘP THOẠI THÊM LỊCH ---
+    private void showAddTaskDialog() {
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_add_task);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+        // Ánh xạ (Tìm các thành phần trong XML)
+        EditText edtTitle = dialog.findViewById(R.id.edt_task_title);
+        EditText edtDesc = dialog.findViewById(R.id.edt_task_desc);
+        TextView tvStartDate = dialog.findViewById(R.id.tv_start_date);
+        TextView tvStartTime = dialog.findViewById(R.id.tv_start_time);
+        TextView tvEndDate = dialog.findViewById(R.id.tv_end_date);
+        TextView tvEndTime = dialog.findViewById(R.id.tv_end_time);
+        Button btnSave = dialog.findViewById(R.id.btn_save_task);
+
+        // --- XỬ LÝ CHỌN NGÀY ---
+        tvStartDate.setOnClickListener(v -> showDatePicker(tvStartDate));
+        tvEndDate.setOnClickListener(v -> showDatePicker(tvEndDate));
+
+        // --- XỬ LÝ CHỌN GIỜ ---
+        tvStartTime.setOnClickListener(v -> showTimePicker(tvStartTime));
+        tvEndTime.setOnClickListener(v -> showTimePicker(tvEndTime));
+
+        btnSave.setOnClickListener(v -> {
+            // Lấy dữ liệu từ các ô nhập
+            String title = edtTitle.getText().toString().trim();
+            String desc = edtDesc.getText().toString().trim();
+            String sDate = tvStartDate.getText().toString();
+            String sTime = tvStartTime.getText().toString();
+            String eDate = tvEndDate.getText().toString();
+            String eTime = tvEndTime.getText().toString();
+
+            if (title.isEmpty()) {
+                Toast.makeText(this, "Hãy nhập tên công việc!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Tạo đối tượng Task mới để lưu
+            Task newTask = new Task();
+            newTask.setTitle(title);
+            newTask.setDescription(desc);
+            newTask.setStartDate(sDate + " " + sTime); // Kết hợp ngày và giờ
+            newTask.setEndDate(eDate + " " + eTime);
+
+            // Lưu vào SQLite
+            DatabaseHelper db = new DatabaseHelper(this);
+            if (db.addTask(newTask) != -1) {
+                Toast.makeText(this, "Thành công!", Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
+            }
+        });
+
+        dialog.show();
+    }
+    // --- HÀM HIỆN TỜ LỊCH (DatePicker) ---
+    private void showDatePicker(TextView textView) {
+        java.util.Calendar calendar = java.util.Calendar.getInstance();
+        int day = calendar.get(java.util.Calendar.DAY_OF_MONTH);
+        int month = calendar.get(java.util.Calendar.MONTH);
+        int year = calendar.get(java.util.Calendar.YEAR);
+
+        android.app.DatePickerDialog datePicker = new android.app.DatePickerDialog(this, (view, y, m, d) -> {
+            textView.setText(d + "/" + (m + 1) + "/" + y);
+        }, year, month, day);
+        datePicker.show();
+    }
+
+    // --- HÀM HIỆN ĐỒNG HỒ (TimePicker) ---
+    private void showTimePicker(TextView textView) {
+        java.util.Calendar calendar = java.util.Calendar.getInstance();
+        int hour = calendar.get(java.util.Calendar.HOUR_OF_DAY);
+        int minute = calendar.get(java.util.Calendar.MINUTE);
+
+        android.app.TimePickerDialog timePicker = new android.app.TimePickerDialog(this, (view, h, m) -> {
+            textView.setText(String.format("%02d:%02d", h, m));
+        }, hour, minute, true); // true là định dạng 24h
+        timePicker.show();
     }
 }

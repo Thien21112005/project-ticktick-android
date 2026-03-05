@@ -7,19 +7,18 @@
     android:padding="24dp">
 
     <TextView
-        android:id="@+id/tv_title" android:layout_width="wrap_content"
+        android:id="@+id/tv_title"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Hôm nay"
-        android:textColor="@color/text_dark"
+        android:textColor="@color/black"
         android:textSize="28sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"/>
 
-    <TextView
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_tasks"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:text="Chưa có công việc nào.\nHãy tận hưởng ngày mới nhé!"
-        android:textColor="@color/icon_inactive"
-        android:textSize="16sp" />
+        android:layout_height="match_parent" />
 
 </LinearLayout>

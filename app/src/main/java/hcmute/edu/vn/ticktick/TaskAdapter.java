@@ -29,9 +29,13 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
     // 2. Gắn dữ liệu thật vào cái khung (Lấy title, time nhét vào TextView)
     @Override
     public void onBindViewHolder(@NonNull TaskViewHolder holder, int position) {
-        Task task = taskList.get(position); // Lấy công việc ở vị trí hiện tại
-        holder.tvTitle.setText(task.getTitle()); // Đặt chữ cho Tiêu đề
-        holder.tvTime.setText(task.getStartDate() + " - " + task.getEndDate()); // Đặt chữ cho Thời gian
+        Task task = taskList.get(position); // Lấy danh mục ở vị trí hiện tại
+
+        // Đặt chữ cho Tiêu đề (Ví dụ: "Học bài")
+        holder.tvTitle.setText(task.getTitle());
+
+        // VÌ TASK GIỜ KHÔNG CÓ NGÀY GIỜ NỮA, TA ẨN LUÔN Ô THỜI GIAN NÀY ĐI
+        holder.tvTime.setVisibility(View.GONE);
     }
 
     // 3. Báo cho băng chuyền biết có tổng cộng bao nhiêu món hàng

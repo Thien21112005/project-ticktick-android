@@ -1,94 +1,110 @@
 package hcmute.edu.vn.ticktick;
+
+import android.app.Dialog;
 import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import java.util.List;
+
+import hcmute.edu.vn.ticktick.database.DatabaseHelper;
+import hcmute.edu.vn.ticktick.models.Task;
 
 public class MenuFragment extends Fragment {
+
+    private LinearLayout layoutDynamicLists; // Khai báo "giá sách"
+    private DatabaseHelper dbHelper;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_menu, container, false);
-
         MainActivity mainActivity = (MainActivity) getActivity();
 
-        // Tìm 3 nút
-        LinearLayout btnToday = view.findViewById(R.id.menu_item_today);
-        ImageView iconToday = view.findViewById(R.id.icon_today);
-        TextView textToday = view.findViewById(R.id.text_today);
+        dbHelper = new DatabaseHelper(requireContext());
 
-        LinearLayout btnInbox = view.findViewById(R.id.menu_item_inbox);
-        ImageView iconInbox = view.findViewById(R.id.icon_inbox);
-        TextView textInbox = view.findViewById(R.id.text_inbox);
+        // ... (Giữ nguyên các đoạn tìm ID btnToday, btnInbox... và cấu hình màu sắc của bạn) ...
 
-        LinearLayout btn7Days = view.findViewById(R.id.menu_item_next_7_days);
-        ImageView icon7Days = view.findViewById(R.id.icon_7days);
-        TextView text7Days = view.findViewById(R.id.text_7days);
+        // 1. TÌM NÚT DẤU CỘNG VÀ CÁI GIÁ SÁCH
+        ImageView btnAddList = view.findViewById(R.id.btn_add_list);
+        layoutDynamicLists = view.findViewById(R.id.layout_dynamic_lists);
 
-        // Chuẩn bị màu và hiệu ứng
-        int colorRed = ContextCompat.getColor(requireContext(), R.color.red_primary);
-        int colorGray = ContextCompat.getColor(requireContext(), R.color.icon_inactive);
-        int colorTextDark = ContextCompat.getColor(requireContext(), R.color.text_dark);
+        // 2. TẢI CÁC DANH MỤC LÊN MENU KHI VỪA MỞ APP
+        loadListsToMenu();
 
-        TypedValue rippleEffect = new TypedValue();
-        requireContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackground, rippleEffect, true);
-
-        // HÀM PHỤ TRỢ: Giúp code gọn hơn, tái sử dụng để reset màu về xám
-        Runnable resetColors = () -> {
-            btnToday.setBackgroundResource(rippleEffect.resourceId);
-            iconToday.setImageTintList(ColorStateList.valueOf(colorGray));
-            textToday.setTextColor(colorTextDark);
-
-            btnInbox.setBackgroundResource(rippleEffect.resourceId);
-            iconInbox.setImageTintList(ColorStateList.valueOf(colorGray));
-            textInbox.setTextColor(colorTextDark);
-
-            btn7Days.setBackgroundResource(rippleEffect.resourceId);
-            icon7Days.setImageTintList(ColorStateList.valueOf(colorGray));
-            text7Days.setTextColor(colorTextDark);
-        };
-
-        if (mainActivity != null) {
-            resetColors.run(); // Đầu tiên cứ reset hết cả 3 về xám trước cho chắc ăn
-
-            if (mainActivity.currentMenuSelection == 0) {
-                // Đang chọn Today -> Tô đỏ Today
-                btnToday.setBackgroundResource(R.drawable.bg_rounded_red_light);
-                iconToday.setImageTintList(ColorStateList.valueOf(colorRed));
-                textToday.setTextColor(colorRed);
-            } else if (mainActivity.currentMenuSelection == 1) {
-                // Đang chọn Inbox -> Tô đỏ Inbox
-                btnInbox.setBackgroundResource(R.drawable.bg_rounded_red_light);
-                iconInbox.setImageTintList(ColorStateList.valueOf(colorRed));
-                textInbox.setTextColor(colorRed);
-            } else if (mainActivity.currentMenuSelection == 2) {
-                // Đang chọn 7 Days -> Tô đỏ 7 Days
-                btn7Days.setBackgroundResource(R.drawable.bg_rounded_red_light);
-                icon7Days.setImageTintList(ColorStateList.valueOf(colorRed));
-                text7Days.setTextColor(colorRed);
-            }
-        }
-
-        // Cài đặt sự kiện BẤM cho cả 3 nút
-        btnToday.setOnClickListener(v -> {
-            if (mainActivity != null) mainActivity.onMenuItemSelected(0);
-        });
-
-        btnInbox.setOnClickListener(v -> {
-            if (mainActivity != null) mainActivity.onMenuItemSelected(1);
-        });
-
-        btn7Days.setOnClickListener(v -> {
-            if (mainActivity != null) mainActivity.onMenuItemSelected(2);
-        });
+        // 3. SỰ KIỆN KHI BẤM NÚT DẤU CỘNG Ở MỤC LISTS
+        btnAddList.setOnClickListener(v -> showAddListDialog());
 
         return view;
+    }
+
+    // --- HÀM TẢI DỮ LIỆU TỪ SQLITE LÊN MENU ---
+    private void loadListsToMenu() {
+        // Xóa sạch các mục cũ đi trước khi xếp lại để không bị trùng lặp
+        layoutDynamicLists.removeAllViews();
+
+        // Lấy danh sách từ Database
+        List<Task> tasks = dbHelper.getAllTasks();
+
+        // Duyệt qua từng danh mục (Học bài, Thể thao...)
+        for (Task task : tasks) {
+            // Dùng code Java để "đúc" ra một dòng TextView mới
+            TextView tvList = new TextView(requireContext());
+            tvList.setText("• " + task.getTitle()); // Thêm dấu chấm cho đẹp
+            tvList.setTextSize(15f);
+            tvList.setTextColor(Color.parseColor("#444444"));
+            tvList.setPadding(0, 16, 0, 16); // Tạo khoảng cách trên dưới cho dễ bấm
+
+            // Xếp nó lên "giá sách"
+            layoutDynamicLists.addView(tvList);
+
+            // Nếu bạn muốn bấm vào "Học bài" để mở ra danh sách việc học,
+            // có thể thiết lập sự kiện onClick tại đây (chúng ta sẽ làm sau)
+            // tvList.setOnClickListener(v -> { ... });
+        }
+    }
+
+    // --- HÀM MỞ HỘP THOẠI THÊM DANH MỤC ---
+    private void showAddListDialog() {
+        Dialog dialog = new Dialog(requireContext());
+        dialog.setContentView(R.layout.dialog_add_list);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+        EditText edtName = dialog.findViewById(R.id.edt_list_name);
+        Button btnSave = dialog.findViewById(R.id.btn_save_list);
+
+        btnSave.setOnClickListener(v -> {
+            String name = edtName.getText().toString().trim();
+            if (name.isEmpty()) {
+                Toast.makeText(requireContext(), "Vui lòng nhập tên danh mục!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Lưu vào bảng Task
+            Task newTask = new Task();
+            newTask.setTitle(name);
+            long result = dbHelper.addTask(newTask);
+
+            if (result != -1) {
+                Toast.makeText(requireContext(), "Đã thêm danh mục!", Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
+                // LƯU THÀNH CÔNG THÌ GỌI LẠI HÀM NÀY ĐỂ VẼ LẠI GIAO DIỆN
+                loadListsToMenu();
+            }
+        });
+
+        dialog.show();
     }
 }

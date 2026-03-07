@@ -6,11 +6,16 @@ public class SubTask {
     private String title;           // Tiêu đề subtask
     private String startDateTime;   // Ngày giờ bắt đầu
     private boolean isDone;         // Đã hoàn thành hay chưa
+    private String taskName; // phục vụ cho gom nhóm theo task
 
     public SubTask() {
     }
 
-    // --- CÁC HÀM SETTER (Dùng để gán dữ liệu - MainActivity đang cần cái này) ---
+    // --- CÁC HÀM SETTER (Dùng để gán dữ liệu vào) ---
+    public void setId(int id) {
+        this.id = id;
+    }
+
     public void setTaskId(int taskId) {
         this.taskId = taskId;
     }
@@ -27,10 +32,15 @@ public class SubTask {
         isDone = done;
     }
 
+    public void setTaskName(String taskName) {
+        this.taskName = taskName;
+    }
+
     // --- CÁC HÀM GETTER (Dùng để lấy dữ liệu ra) ---
     public int getId() { return id; }
     public int getTaskId() { return taskId; }
     public String getTitle() { return title; }
     public String getStartDateTime() { return startDateTime; }
     public boolean isDone() { return isDone; }
+    public String getTaskName() { return taskName; }
 }

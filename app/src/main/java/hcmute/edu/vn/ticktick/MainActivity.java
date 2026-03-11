@@ -192,4 +192,21 @@ public class MainActivity extends AppCompatActivity {
         }, hour, minute, true);
         timePicker.show();
     }
+    // --- HÀM MỞ MÀN HÌNH DANH SÁCH CÔNG VIỆC CỦA TỪNG DANH MỤC ---
+    public void openListFragment(int taskId, String listName) {
+        // Đặt một số bất kỳ (ví dụ số 3) để đánh dấu là không phải Today(0), Inbox(1) hay 7Days(2)
+        currentMenuSelection = 3;
+
+        // Tạo một cái thùng (Bundle) để nhét ID và Tên vào
+        Bundle bundle = new Bundle();
+        bundle.putInt("TASK_ID", taskId);
+        bundle.putString("TASK_NAME", listName);
+
+        // Tạo Fragment mới và gắn cái thùng vào lưng nó
+        ListTasksFragment fragment = new ListTasksFragment();
+        fragment.setArguments(bundle);
+
+        // Ra lệnh chuyển màn hình
+        loadFragment(fragment);
+    }
 }

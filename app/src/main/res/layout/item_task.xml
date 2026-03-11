@@ -3,27 +3,26 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
-
-    <TextView
-        android:id="@+id/tv_category_header"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Tên Danh Mục"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="#FF5252"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="4dp"/>
+    android:orientation="vertical"
+    android:paddingHorizontal="16dp"> <TextView
+    android:id="@+id/tv_category_header"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="TÊN DANH MỤC"
+    android:textAllCaps="true"
+    android:textSize="14sp"
+    android:textStyle="bold"
+    android:textColor="@color/red_primary"
+    android:letterSpacing="0.05"
+    android:layout_marginTop="20dp"
+    android:layout_marginBottom="8dp"/>
 
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginBottom="8dp"
-        app:cardCornerRadius="8dp"
-        app:cardElevation="2dp"
+        android:layout_marginBottom="12dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="3dp"
         android:clickable="true"
         android:focusable="true"
         android:foreground="?android:attr/selectableItemBackground">
@@ -40,13 +39,15 @@
                 android:id="@+id/cb_task_done"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:buttonTint="#FF5252" />
+                android:scaleX="1.1"
+                android:scaleY="1.1"
+                app:buttonTint="@color/red_primary" />
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="12dp"
+                android:layout_marginStart="16dp"
                 android:orientation="vertical">
 
                 <TextView
@@ -54,18 +55,18 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Tiêu đề công việc"
-                    android:textSize="16sp"
-                    android:textColor="#333333"
+                    android:textSize="17sp"
+                    android:textColor="#222222"
                     android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tv_item_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
+                    android:layout_marginTop="6dp"
                     android:text="Hôm nay 10:00"
-                    android:textSize="13sp"
-                    android:textColor="#888888" />
+                    android:textSize="14sp"
+                    android:textColor="#757575" />
             </LinearLayout>
         </LinearLayout>
     </androidx.cardview.widget.CardView>

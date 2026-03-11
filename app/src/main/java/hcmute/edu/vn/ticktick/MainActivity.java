@@ -124,6 +124,10 @@ public class MainActivity extends AppCompatActivity {
         TextView tvStartTime = dialog.findViewById(R.id.tv_start_time);
         Button btnSave = dialog.findViewById(R.id.btn_save_task);
 
+        // --- ĐOẠN CODE MỚI THÊM 1: Ánh xạ Menu xổ xuống của Nhắc nhở ---
+        android.widget.AutoCompleteTextView autoCompleteNotify = dialog.findViewById(R.id.autoComplete_notify_before);
+        // --------------------------------------------------------------
+
         // Bước 2: Đổ tên các Danh mục vào Spinner (Menu thả xuống)
         List<String> taskNames = new ArrayList<>();
         for (Task t : allTasks) {
@@ -131,6 +135,23 @@ public class MainActivity extends AppCompatActivity {
         }
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, taskNames);
         spinnerCategory.setAdapter(adapter);
+
+        // --- ĐOẠN CODE MỚI THÊM 2: Cài đặt dữ liệu và sự kiện cho Menu Nhắc nhở ---
+        String[] notifyOptions = {"Không nhắc", "Trước 10 phút", "Trước 30 phút", "Trước 1 giờ", "Trước 1 ngày"};
+        int[] notifyValues = {0, 10, 30, 60, 1440};
+
+        ArrayAdapter<String> notifyAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, notifyOptions);
+        autoCompleteNotify.setAdapter(notifyAdapter);
+        autoCompleteNotify.setText(notifyOptions[0], false); // Mặc định hiển thị "Không nhắc"
+
+        // Biến lưu trữ số phút nhắc nhở (dùng mảng 1 phần tử để truyền được vào bên trong sự kiện click)
+        final int[] selectedNotifyValue = {0};
+
+        autoCompleteNotify.setOnItemClickListener((parent, view, position, id) -> {
+            // Lấy số phút tương ứng (ví dụ: chọn "Trước 10 phút" -> lấy số 10)
+            selectedNotifyValue[0] = notifyValues[position];
+        });
+        // -------------------------------------------------------------------------
 
         // Xử lý Lịch và Đồng hồ
         tvStartDate.setOnClickListener(v -> showDatePicker(tvStartDate));
@@ -157,6 +178,10 @@ public class MainActivity extends AppCompatActivity {
             newSubTask.setTitle(title);
             newSubTask.setStartDateTime(sDate + " " + sTime);
             newSubTask.setDone(false); // Mặc định là chưa xong
+
+            // --- ĐOẠN CODE MỚI THÊM 3: Gắn số phút nhắc nhở vào đối tượng SubTask trước khi lưu ---
+            newSubTask.setNotifyBefore(selectedNotifyValue[0]);
+            // --------------------------------------------------------------------------------------
 
             // Bước 5: Lưu vào bảng SubTask trong SQLite
             if (db.addSubTask(newSubTask) != -1) {

@@ -8,6 +8,7 @@ import androidx.fragment.app.FragmentTransaction;
 import android.app.Dialog;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,6 +34,17 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        NotificationHelper.createNotificationChannel(this);
+
+        // Xin quyền POST_NOTIFICATIONS (bắt buộc Android 13+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+                    != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(
+                        new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 101);
+            }
+        }
+
         setContentView(R.layout.activity_main);
 
         // Mặc định mở Today
@@ -123,6 +135,8 @@ public class MainActivity extends AppCompatActivity {
         TextView tvStartDate = dialog.findViewById(R.id.tv_start_date);
         TextView tvStartTime = dialog.findViewById(R.id.tv_start_time);
         Button btnSave = dialog.findViewById(R.id.btn_save_task);
+        TextView tvDueDate = dialog.findViewById(R.id.tv_due_date);
+        TextView tvDueTime = dialog.findViewById(R.id.tv_due_time);
 
         // --- ĐOẠN CODE MỚI THÊM 1: Ánh xạ Menu xổ xuống của Nhắc nhở ---
         android.widget.AutoCompleteTextView autoCompleteNotify = dialog.findViewById(R.id.autoComplete_notify_before);
@@ -137,8 +151,8 @@ public class MainActivity extends AppCompatActivity {
         spinnerCategory.setAdapter(adapter);
 
         // --- ĐOẠN CODE MỚI THÊM 2: Cài đặt dữ liệu và sự kiện cho Menu Nhắc nhở ---
-        String[] notifyOptions = {"Không nhắc", "Trước 10 phút", "Trước 30 phút", "Trước 1 giờ", "Trước 1 ngày"};
-        int[] notifyValues = {0, 10, 30, 60, 1440};
+        String[] notifyOptions = {"Không nhắc", "Trước 1 phút", "Trước 30 phút", "Trước 1 giờ", "Trước 1 ngày"};
+        int[] notifyValues = {0, 1, 30, 60, 1440};
 
         ArrayAdapter<String> notifyAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, notifyOptions);
         autoCompleteNotify.setAdapter(notifyAdapter);
@@ -156,6 +170,8 @@ public class MainActivity extends AppCompatActivity {
         // Xử lý Lịch và Đồng hồ
         tvStartDate.setOnClickListener(v -> showDatePicker(tvStartDate));
         tvStartTime.setOnClickListener(v -> showTimePicker(tvStartTime));
+        tvDueDate.setOnClickListener(v -> showDatePicker(tvDueDate));
+        tvDueTime.setOnClickListener(v -> showTimePicker(tvDueTime));
 
         // Bước 3: Khi bấm nút LƯU
         btnSave.setOnClickListener(v -> {
@@ -182,11 +198,20 @@ public class MainActivity extends AppCompatActivity {
             // --- ĐOẠN CODE MỚI THÊM 3: Gắn số phút nhắc nhở vào đối tượng SubTask trước khi lưu ---
             newSubTask.setNotifyBefore(selectedNotifyValue[0]);
             // --------------------------------------------------------------------------------------
-
+            String dDate = tvDueDate.getText().toString();
+            String dTime = tvDueTime.getText().toString();
+            // Chỉ lưu nếu người dùng đã chọn (không phải placeholder)
+            if (!dDate.contains("Chọn") && !dTime.contains("Chọn")) {
+                newSubTask.setDueDateTime(dDate + " " + dTime);
+            }
             // Bước 5: Lưu vào bảng SubTask trong SQLite
-            if (db.addSubTask(newSubTask) != -1) {
-                Toast.makeText(this, "Đã thêm công việc vào danh mục!", Toast.LENGTH_SHORT).show();
+            long newId = db.addSubTask(newSubTask);
+            if (newId != -1) {
+                newSubTask.setId((int) newId); // Gán ID vừa được sinh ra
+                WorkManagerScheduler.scheduleNotification(MainActivity.this, newSubTask); // <-- LÊN LỊCH NHẮC
+                Toast.makeText(this, "Đã thêm công việc!", Toast.LENGTH_SHORT).show();
                 dialog.dismiss();
+
             } else {
                 Toast.makeText(this, "Lỗi khi lưu vào Database!", Toast.LENGTH_SHORT).show();
             }

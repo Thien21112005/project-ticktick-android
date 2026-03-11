@@ -14,20 +14,18 @@ import hcmute.edu.vn.ticktick.models.Task;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "TickTickApp.db";
-    // 💡 LƯU Ý QUAN TRỌNG: Đổi DATABASE_VERSION từ 1 lên 2 để máy biết là mình vừa cấu trúc lại Database và nó sẽ tạo lại bảng mới.
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 4; // <-- ĐỔI LÊN 4
 
-    // --- BẢNG 1: TASK (ĐÓNG VAI TRÒ LÀ DANH MỤC / LISTS) ---
     public static final String TABLE_TASK = "Task";
     public static final String COLUMN_TASK_ID = "id";
     public static final String COLUMN_TASK_TITLE = "title";
 
-    // --- BẢNG 2: SUBTASK (ĐÓNG VAI TRÒ LÀ CÔNG VIỆC CỤ THỂ) ---
     public static final String TABLE_SUBTASK = "SubTask";
     public static final String COLUMN_SUBTASK_ID = "id";
     public static final String COLUMN_SUBTASK_TASK_ID = "taskId";
     public static final String COLUMN_SUBTASK_TITLE = "title";
     public static final String COLUMN_SUBTASK_TIME = "startDateTime";
+    public static final String COLUMN_SUBTASK_DUE = "dueDateTime";       // <-- THÊM MỚI
     public static final String COLUMN_SUBTASK_IS_DONE = "isDone";
     public static final String COLUMN_SUBTASK_NOTIFY = "notifyBefore";
 
@@ -37,20 +35,20 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        // Lệnh tạo bảng Task
         String createTableTask = "CREATE TABLE " + TABLE_TASK + " ("
                 + COLUMN_TASK_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + COLUMN_TASK_TITLE + " TEXT)";
 
-        // Lệnh tạo bảng SubTask (Có chứa ngày giờ và khóa ngoại nối với bảng Task)
         String createTableSubTask = "CREATE TABLE " + TABLE_SUBTASK + " ("
                 + COLUMN_SUBTASK_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + COLUMN_SUBTASK_TASK_ID + " INTEGER, "
                 + COLUMN_SUBTASK_TITLE + " TEXT, "
                 + COLUMN_SUBTASK_TIME + " TEXT, "
+                + COLUMN_SUBTASK_DUE + " TEXT, "                          // <-- THÊM MỚI
                 + COLUMN_SUBTASK_IS_DONE + " INTEGER DEFAULT 0, "
                 + COLUMN_SUBTASK_NOTIFY + " INTEGER DEFAULT 0, "
-                + "FOREIGN KEY(" + COLUMN_SUBTASK_TASK_ID + ") REFERENCES " + TABLE_TASK + "(" + COLUMN_TASK_ID + ") ON DELETE CASCADE)";
+                + "FOREIGN KEY(" + COLUMN_SUBTASK_TASK_ID + ") REFERENCES "
+                + TABLE_TASK + "(" + COLUMN_TASK_ID + ") ON DELETE CASCADE)";
 
         db.execSQL(createTableTask);
         db.execSQL(createTableSubTask);
@@ -68,9 +66,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             db.execSQL("ALTER TABLE " + TABLE_SUBTASK +
                     " ADD COLUMN " + COLUMN_SUBTASK_NOTIFY + " INTEGER DEFAULT 0");
         }
+        if (oldVersion < 4) {                                             // <-- THÊM MỚI
+            db.execSQL("ALTER TABLE " + TABLE_SUBTASK +
+                    " ADD COLUMN " + COLUMN_SUBTASK_DUE + " TEXT");
+        }
     }
 
-    // Hàm thêm Danh Mục (Task)
     public long addTask(Task task) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -79,18 +80,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
         return id;
     }
-    // Hàm lấy danh sách các Thư Mục (Task)
+
     public List<Task> getAllTasks() {
         List<Task> list = new ArrayList<>();
-        String query = "SELECT * FROM " + TABLE_TASK;
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.rawQuery(query, null);
-
+        Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_TASK, null);
         if (cursor.moveToFirst()) {
             do {
                 Task task = new Task();
-                task.setId(cursor.getInt(0));      // Cột 0 là ID
-                task.setTitle(cursor.getString(1)); // Cột 1 là Tiêu đề
+                task.setId(cursor.getInt(0));
+                task.setTitle(cursor.getString(1));
                 list.add(task);
             } while (cursor.moveToNext());
         }
@@ -98,84 +97,66 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
         return list;
     }
+
     public long addSubTask(SubTask subTask) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
-
-        // Đưa dữ liệu vào các cột tương ứng trong bảng SubTask
         values.put(COLUMN_SUBTASK_TASK_ID, subTask.getTaskId());
         values.put(COLUMN_SUBTASK_TITLE, subTask.getTitle());
         values.put(COLUMN_SUBTASK_TIME, subTask.getStartDateTime());
+        values.put(COLUMN_SUBTASK_DUE, subTask.getDueDateTime());         // <-- THÊM MỚI
         values.put(COLUMN_SUBTASK_IS_DONE, subTask.isDone() ? 1 : 0);
         values.put(COLUMN_SUBTASK_NOTIFY, subTask.getNotifyBefore());
-
         long id = db.insert(TABLE_SUBTASK, null, values);
         db.close();
-        return id; // Trả về ID của dòng vừa thêm
+        return id;
     }
-    // --- HÀM LẤY DANH SÁCH TẤT CẢ CÔNG VIỆC (SUBTASK) ---
+
+    // --- Helper đọc SubTask từ Cursor (tránh lặp code) ---
+    // Thứ tự cột: 0=id, 1=taskId, 2=title, 3=startDateTime, 4=dueDateTime, 5=isDone, 6=notifyBefore
+    private SubTask cursorToSubTask(Cursor cursor) {
+        SubTask subTask = new SubTask();
+        subTask.setId(cursor.getInt(0));
+        subTask.setTaskId(cursor.getInt(1));
+        subTask.setTitle(cursor.getString(2));
+        subTask.setStartDateTime(cursor.getString(3));
+        subTask.setDueDateTime(cursor.getString(4));                      // <-- THÊM MỚI
+        subTask.setDone(cursor.getInt(5) == 1);
+        subTask.setNotifyBefore(cursor.getInt(6));
+        return subTask;
+    }
+
     public List<SubTask> getAllSubTasks() {
         List<SubTask> list = new ArrayList<>();
-        // Câu lệnh SQL yêu cầu lấy tất cả dữ liệu từ bảng SubTask
-        String query = "SELECT * FROM " + TABLE_SUBTASK;
-
-        SQLiteDatabase db = this.getReadableDatabase(); // Mở kho database để đọc
-        Cursor cursor = db.rawQuery(query, null); // Con trỏ (Cursor) duyệt qua từng dòng dữ liệu
-
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_SUBTASK, null);
         if (cursor.moveToFirst()) {
-            do {
-                SubTask subTask = new SubTask();
-                subTask.setId(cursor.getInt(0));              // Cột 0: ID của SubTask
-                subTask.setTaskId(cursor.getInt(1));          // Cột 1: ID của Danh mục (Task)
-                subTask.setTitle(cursor.getString(2));        // Cột 2: Tiêu đề công việc
-                subTask.setStartDateTime(cursor.getString(3));// Cột 3: Ngày giờ
-                subTask.setDone(cursor.getInt(4) == 1);       // Cột 4: Đã xong chưa (1 là true, 0 là false)
-                subTask.setNotifyBefore(cursor.getInt(5));
-
-                list.add(subTask); // Thêm công việc vừa nhặt được vào danh sách
-            } while (cursor.moveToNext()); // Tiếp tục chuyển sang dòng tiếp theo
+            do { list.add(cursorToSubTask(cursor)); } while (cursor.moveToNext());
         }
         cursor.close();
-        db.close(); // Đóng kho lại
-        return list; // Trả về danh sách công việc
+        db.close();
+        return list;
     }
 
-    // --- HÀM XÓA DANH MỤC (TASK) ---
     public void deleteTask(int taskId) {
-        // 1. Mở cửa kho dữ liệu với quyền ghi (để có thể xóa)
         SQLiteDatabase db = this.getWritableDatabase();
-
-        // 2. Ra lệnh xóa:
-        // - Xóa ở bảng nào? -> Bảng TABLE_TASK
-        // - Xóa dòng nào? -> Dòng có cột ID khớp với tham số taskId truyền vào
         db.delete(TABLE_TASK, COLUMN_TASK_ID + " = ?", new String[]{String.valueOf(taskId)});
-
-        // 3. Xóa xong thì đóng cửa kho lại cho an toàn
         db.close();
     }
-    // --- HÀM MỚI: LẤY CÔNG VIỆC + TÊN DANH MỤC (VÀ SẮP XẾP GOM NHÓM) ---
+
     public List<SubTask> getAllSubTasksWithCategory() {
         List<SubTask> list = new ArrayList<>();
-        // Lệnh JOIN: Nối 2 bảng và Sắp xếp (ORDER BY) theo ID danh mục để chúng gom lại 1 chỗ
-        String query = "SELECT SubTask.*, Task.title FROM " + TABLE_SUBTASK +
-                " INNER JOIN " + TABLE_TASK +
-                " ON SubTask." + COLUMN_SUBTASK_TASK_ID + " = Task." + COLUMN_TASK_ID +
-                " ORDER BY SubTask." + COLUMN_SUBTASK_TASK_ID;
-
+        // Thứ tự cột JOIN: 0=id,1=taskId,2=title,3=startDateTime,4=dueDateTime,5=isDone,6=notifyBefore,7=taskName
+        String query = "SELECT SubTask.*, Task.title FROM " + TABLE_SUBTASK
+                + " INNER JOIN " + TABLE_TASK
+                + " ON SubTask." + COLUMN_SUBTASK_TASK_ID + " = Task." + COLUMN_TASK_ID
+                + " ORDER BY SubTask." + COLUMN_SUBTASK_TASK_ID;
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery(query, null);
-
         if (cursor.moveToFirst()) {
             do {
-                SubTask subTask = new SubTask();
-                subTask.setId(cursor.getInt(0));
-                subTask.setTaskId(cursor.getInt(1));
-                subTask.setTitle(cursor.getString(2));
-                subTask.setStartDateTime(cursor.getString(3));
-                subTask.setDone(cursor.getInt(4) == 1);
-                subTask.setNotifyBefore(cursor.getInt(5));
-                subTask.setTaskName(cursor.getString(6));
-
+                SubTask subTask = cursorToSubTask(cursor);
+                subTask.setTaskName(cursor.getString(7));                 // cột 7 = Task.title
                 list.add(subTask);
             } while (cursor.moveToNext());
         }
@@ -184,38 +165,23 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return list;
     }
 
-    // --- HÀM ĐỔI TÊN DANH MỤC (TASK) ---
     public int updateTaskName(int taskId, String newName) {
-        SQLiteDatabase db = this.getWritableDatabase(); // Mở kho với quyền ghi
-
-        android.content.ContentValues values = new android.content.ContentValues();
-        values.put(COLUMN_TASK_TITLE, newName); // Đưa tên mới vào gói hàng
-
-        // Ra lệnh cập nhật: Tìm dòng có ID tương ứng và thay bằng tên mới
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_TASK_TITLE, newName);
         int result = db.update(TABLE_TASK, values, COLUMN_TASK_ID + " = ?", new String[]{String.valueOf(taskId)});
         db.close();
-        return result; // Trả về số lượng dòng đã sửa thành công
+        return result;
     }
-    // --- HÀM LẤY DANH SÁCH CÔNG VIỆC CỦA MỘT DANH MỤC CỤ THỂ ---
+
     public List<SubTask> getSubTasksByTaskId(int taskId) {
         List<SubTask> list = new ArrayList<>();
-        // Câu lệnh SQL: Lấy tất cả từ bảng SubTask NƠI MÀ cột taskId bằng với id truyền vào
-        String query = "SELECT * FROM " + TABLE_SUBTASK + " WHERE " + COLUMN_SUBTASK_TASK_ID + " = " + taskId;
-
+        String query = "SELECT * FROM " + TABLE_SUBTASK
+                + " WHERE " + COLUMN_SUBTASK_TASK_ID + " = " + taskId;
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery(query, null);
-
         if (cursor.moveToFirst()) {
-            do {
-                SubTask subTask = new SubTask();
-                subTask.setId(cursor.getInt(0));
-                subTask.setTaskId(cursor.getInt(1));
-                subTask.setTitle(cursor.getString(2));
-                subTask.setStartDateTime(cursor.getString(3));
-                subTask.setDone(cursor.getInt(4) == 1);
-                subTask.setNotifyBefore(cursor.getInt(5));
-                list.add(subTask);
-            } while (cursor.moveToNext());
+            do { list.add(cursorToSubTask(cursor)); } while (cursor.moveToNext());
         }
         cursor.close();
         db.close();

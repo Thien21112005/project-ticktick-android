@@ -50,6 +50,13 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
         // Đặt chữ cho Tiêu đề và Thời gian
         holder.tvTitle.setText(subTask.getTitle());
         holder.tvTime.setText(subTask.getStartDateTime());
+        String due = subTask.getDueDateTime();
+        if (due != null && !due.trim().isEmpty() && !due.contains("Chọn")) {
+            holder.tvDue.setVisibility(View.VISIBLE);
+            holder.tvDue.setText("⏳ Hạn: " + due);
+        } else {
+            holder.tvDue.setVisibility(View.GONE);
+        }
 
         // LƯU Ý QUAN TRỌNG: Gỡ sự kiện cũ ra trước khi gán trạng thái mới để tránh lỗi hiển thị lộn xộn
         holder.cbDone.setOnCheckedChangeListener(null);
@@ -93,6 +100,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
     public static class TaskViewHolder extends RecyclerView.ViewHolder {
         TextView tvTitle, tvTime, tvCategoryHeader; //
         CheckBox cbDone;
+        TextView tvDue;
 
         public TaskViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -100,6 +108,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
             tvTime = itemView.findViewById(R.id.tv_item_time);
             cbDone = itemView.findViewById(R.id.cb_task_done);
             tvCategoryHeader = itemView.findViewById(R.id.tv_category_header); // <-- ÁNH XẠ ID Ở ĐÂY
+            tvDue = itemView.findViewById(R.id.tv_item_due);
         }
     }
 }

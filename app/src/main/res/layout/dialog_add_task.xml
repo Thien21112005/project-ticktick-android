@@ -1,96 +1,104 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:background="@android:color/transparent"> <androidx.cardview.widget.CardView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="16dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="8dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@android:color/white"
         android:orientation="vertical"
-        android:padding="20dp">
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:text="Thêm công việc mới"
-            android:textColor="@color/black"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+        android:padding="24dp"> <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        android:text="Thêm công việc mới"
+        android:textColor="#222222"
+        android:textSize="22sp"
+        android:textStyle="bold" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Lưu vào danh mục:"
-            android:textStyle="bold"
-            android:layout_marginBottom="4dp"/>
+            android:text="Lưu vào danh mục"
+            android:textSize="14sp"
+            android:textColor="#757575"
+            android:layout_marginBottom="8dp"/>
 
         <Spinner
             android:id="@+id/spinner_task_category"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="#F0F0F0"
-            android:layout_marginBottom="12dp"/>
+            android:layout_height="50dp"
+            android:background="#F5F5F5"
+            android:layout_marginBottom="20dp"/>
 
         <EditText
             android:id="@+id/edt_task_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:background="#F0F0F0"
+            android:layout_marginBottom="20dp"
+            android:background="#F5F5F5"
             android:hint="Tên công việc..."
-            android:padding="12dp" />
+            android:textColorHint="#999999"
+            android:textSize="16sp"
+            android:padding="16dp" />
 
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Bắt đầu:" android:textStyle="bold"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Thời gian bắt đầu"
+            android:textSize="14sp"
+            android:textColor="#757575"
+            android:layout_marginBottom="8dp"/>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
+            android:layout_marginBottom="24dp"
             android:orientation="horizontal">
+
             <TextView
                 android:id="@+id/tv_start_date"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:background="#E8F5E9"
-                android:padding="10dp"
+                android:background="#FFF0F0"
+                android:textColor="@color/red_primary"
+                android:padding="14dp"
                 android:text="Chọn ngày..."
+                android:textStyle="bold"
                 android:gravity="center" />
+
             <TextView
                 android:id="@+id/tv_start_time"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:background="#E8F5E9"
-                android:padding="10dp"
+                android:layout_marginStart="12dp"
+                android:background="#FFF0F0"
+                android:textColor="@color/red_primary"
+                android:padding="14dp"
                 android:text="Chọn giờ..."
+                android:textStyle="bold"
                 android:gravity="center" />
         </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:orientation="horizontal"/>
-
-        <EditText
-            android:id="@+id/edt_task_desc"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            android:background="#F0F0F0"
-            android:hint="Mô tả công việc..."
-            android:lines="2"
-            android:padding="12dp" />
 
         <Button
             android:id="@+id/btn_save_task"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:backgroundTint="#FF5252"
-            android:text="Lưu Công Việc"
+            android:layout_height="56dp"
+            android:backgroundTint="@color/red_primary"
+            android:text="LƯU CÔNG VIỆC"
+            android:textSize="16sp"
+            android:textStyle="bold"
             android:textColor="@android:color/white" />
     </LinearLayout>
+</androidx.cardview.widget.CardView>
 </ScrollView>

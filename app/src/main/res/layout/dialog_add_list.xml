@@ -1,35 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="20dp"
-    android:background="@android:color/white">
+    android:background="@android:color/transparent"
+    android:padding="16dp">
 
-    <TextView
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Tạo Danh Mục Mới"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="@color/black"
-        android:layout_marginBottom="16dp"/>
+        app:cardCornerRadius="16dp"
+        app:cardElevation="8dp">
 
-    <EditText
-        android:id="@+id/edt_list_name"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Ví dụ: Học bài, Thể thao..."
-        android:inputType="text"
-        android:padding="12dp"
-        android:background="#F0F0F0"
-        android:layout_marginBottom="20dp"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:background="@android:color/white">
 
-    <Button
-        android:id="@+id/btn_save_list"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Lưu"
-        android:backgroundTint="#FF5252"
-        android:textColor="@android:color/white"/>
-</LinearLayout>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Tạo danh mục mới"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="#222222"
+                android:layout_marginBottom="4dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Phân loại công việc giúp bạn quản lý tốt hơn."
+                android:textSize="14sp"
+                android:textColor="#757575"
+                android:layout_marginBottom="20dp"/>
+
+            <EditText
+                android:id="@+id/edt_list_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Ví dụ: Học bài, Thể thao, Việc nhà..."
+                android:textColorHint="#999999"
+                android:textSize="16sp"
+                android:inputType="textCapSentences"
+                android:padding="16dp"
+                android:background="#F5F5F5"
+                android:layout_marginBottom="24dp"/>
+
+            <Button
+                android:id="@+id/btn_save_list"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="LƯU DANH MỤC"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:backgroundTint="#FF5252"
+                android:textColor="@android:color/white"/>
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+</FrameLayout>

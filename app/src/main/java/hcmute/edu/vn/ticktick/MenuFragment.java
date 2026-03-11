@@ -110,6 +110,26 @@ public class MenuFragment extends Fragment {
             tvList.setTextColor(Color.parseColor("#444444"));
             tvList.setPadding(0, 16, 0, 16);
 
+            // BẮT SỰ KIỆN CLICK VÀ LÀM HIGHLIGHT
+            tvList.setOnClickListener(v -> {
+                // UX/UI: Đổi nền sang đỏ nhạt và chữ đỏ ngay lập tức để báo hiệu đã bấm trúng
+                tvList.setBackgroundColor(Color.parseColor("#FFEBEE"));
+                tvList.setTextColor(Color.parseColor("#FF5252"));
+
+                // Hẹn giờ 0.2s y hệt như các nút Today, Inbox...
+                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    // Trả lại màu chữ cũ để lát mở Menu ra nó không bị kẹt màu đỏ mãi
+                    tvList.setBackgroundColor(Color.TRANSPARENT);
+                    tvList.setTextColor(Color.parseColor("#444444"));
+
+                    // Gọi Tổng đài MainActivity chuyển màn hình
+                    MainActivity mainActivity = (MainActivity) getActivity();
+                    if (mainActivity != null) {
+                        mainActivity.openListFragment(task.getId(), task.getTitle());
+                    }
+                }, 200);
+            });
+
             // CÀI ĐẶT UX: NHẤN GIỮ LÂU HIỆN MENU SỬA/XÓA
             tvList.setOnLongClickListener(v -> {
                 // Tạo 2 lựa chọn cho người dùng

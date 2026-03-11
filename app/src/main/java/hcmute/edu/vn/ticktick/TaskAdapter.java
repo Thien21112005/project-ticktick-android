@@ -91,7 +91,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
 
     // Lớp nội: Tìm các ID trong file item_task.xml
     public static class TaskViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTitle, tvTime, tvCategoryHeader; // <-- KHAI BÁO THÊM tvCategoryHeader Ở ĐÂY
+        TextView tvTitle, tvTime, tvCategoryHeader; //
         CheckBox cbDone;
 
         public TaskViewHolder(@NonNull View itemView) {

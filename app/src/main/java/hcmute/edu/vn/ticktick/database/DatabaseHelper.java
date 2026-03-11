@@ -15,7 +15,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "TickTickApp.db";
     // 💡 LƯU Ý QUAN TRỌNG: Đổi DATABASE_VERSION từ 1 lên 2 để máy biết là mình vừa cấu trúc lại Database và nó sẽ tạo lại bảng mới.
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
 
     // --- BẢNG 1: TASK (ĐÓNG VAI TRÒ LÀ DANH MỤC / LISTS) ---
     public static final String TABLE_TASK = "Task";
@@ -29,6 +29,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String COLUMN_SUBTASK_TITLE = "title";
     public static final String COLUMN_SUBTASK_TIME = "startDateTime";
     public static final String COLUMN_SUBTASK_IS_DONE = "isDone";
+    public static final String COLUMN_SUBTASK_NOTIFY = "notifyBefore";
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -48,6 +49,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + COLUMN_SUBTASK_TITLE + " TEXT, "
                 + COLUMN_SUBTASK_TIME + " TEXT, "
                 + COLUMN_SUBTASK_IS_DONE + " INTEGER DEFAULT 0, "
+                + COLUMN_SUBTASK_NOTIFY + " INTEGER DEFAULT 0, "
                 + "FOREIGN KEY(" + COLUMN_SUBTASK_TASK_ID + ") REFERENCES " + TABLE_TASK + "(" + COLUMN_TASK_ID + ") ON DELETE CASCADE)";
 
         db.execSQL(createTableTask);
@@ -62,10 +64,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // Nếu version tăng (từ 1 lên 2), xóa bảng cũ đi và chạy lại hàm onCreate
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_SUBTASK);
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_TASK);
-        onCreate(db);
+        if (oldVersion < 3) {
+            db.execSQL("ALTER TABLE " + TABLE_SUBTASK +
+                    " ADD COLUMN " + COLUMN_SUBTASK_NOTIFY + " INTEGER DEFAULT 0");
+        }
     }
 
     // Hàm thêm Danh Mục (Task)
@@ -105,6 +107,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COLUMN_SUBTASK_TITLE, subTask.getTitle());
         values.put(COLUMN_SUBTASK_TIME, subTask.getStartDateTime());
         values.put(COLUMN_SUBTASK_IS_DONE, subTask.isDone() ? 1 : 0);
+        values.put(COLUMN_SUBTASK_NOTIFY, subTask.getNotifyBefore());
 
         long id = db.insert(TABLE_SUBTASK, null, values);
         db.close();
@@ -127,6 +130,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 subTask.setTitle(cursor.getString(2));        // Cột 2: Tiêu đề công việc
                 subTask.setStartDateTime(cursor.getString(3));// Cột 3: Ngày giờ
                 subTask.setDone(cursor.getInt(4) == 1);       // Cột 4: Đã xong chưa (1 là true, 0 là false)
+                subTask.setNotifyBefore(cursor.getInt(5));
 
                 list.add(subTask); // Thêm công việc vừa nhặt được vào danh sách
             } while (cursor.moveToNext()); // Tiếp tục chuyển sang dòng tiếp theo
@@ -169,9 +173,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 subTask.setTitle(cursor.getString(2));
                 subTask.setStartDateTime(cursor.getString(3));
                 subTask.setDone(cursor.getInt(4) == 1);
-
-                // Lấy thêm Tên Danh mục ở cột số 5 (do ta gọi Task.title ở câu lệnh SQL trên)
-                subTask.setTaskName(cursor.getString(5));
+                subTask.setNotifyBefore(cursor.getInt(5));
+                subTask.setTaskName(cursor.getString(6));
 
                 list.add(subTask);
             } while (cursor.moveToNext());
@@ -210,6 +213,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 subTask.setTitle(cursor.getString(2));
                 subTask.setStartDateTime(cursor.getString(3));
                 subTask.setDone(cursor.getInt(4) == 1);
+                subTask.setNotifyBefore(cursor.getInt(5));
                 list.add(subTask);
             } while (cursor.moveToNext());
         }

@@ -7,6 +7,7 @@ public class SubTask {
     private String startDateTime;   // Ngày giờ bắt đầu
     private boolean isDone;         // Đã hoàn thành hay chưa
     private String taskName; // phục vụ cho gom nhóm theo task
+    private int notifyBefore;
 
     public SubTask() {
     }
@@ -43,4 +44,11 @@ public class SubTask {
     public String getStartDateTime() { return startDateTime; }
     public boolean isDone() { return isDone; }
     public String getTaskName() { return taskName; }
+    public int getNotifyBefore() {
+        return notifyBefore;
+    }
+
+    public void setNotifyBefore(int notifyBefore) {
+        this.notifyBefore = notifyBefore;
+    }
 }

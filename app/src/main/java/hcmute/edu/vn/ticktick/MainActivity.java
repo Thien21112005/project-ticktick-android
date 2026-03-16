@@ -2,6 +2,8 @@ package hcmute.edu.vn.ticktick;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
@@ -31,6 +33,10 @@ public class MainActivity extends AppCompatActivity {
 
     public int currentMenuSelection = 0;
 
+    // Khai báo các biến UI mới để dùng chung trong class
+    private DrawerLayout drawerLayout;
+    private TextView tvMainTitle;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,41 +53,59 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        // Mặc định mở Today
-        loadFragment(new TasksFragment());
+        // 1. ÁNH XẠ CÁC ID THEO GIAO DIỆN MỚI
+        drawerLayout = findViewById(R.id.drawer_layout);
+        tvMainTitle = findViewById(R.id.tv_main_title);
+        ImageView btnOpenMenu = findViewById(R.id.btn_open_menu);
 
-        ImageView btnTask = findViewById(R.id.btn_nav_task);
-        ImageView btnCalendar = findViewById(R.id.btn_nav_calendar);
+        ImageView btnBottomToday = findViewById(R.id.btn_bottom_today);
+        ImageView btnBottomProfile = findViewById(R.id.btn_bottom_profile);
+        ImageView btnBottomCalendar = findViewById(R.id.btn_bottom_calendar);
 
-        // --- 1. XỬ LÝ KHI BẤM NÚT TASK ---
-        btnTask.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                btnTask.setColorFilter(ContextCompat.getColor(MainActivity.this, R.color.red_primary));
-                btnCalendar.setColorFilter(ContextCompat.getColor(MainActivity.this, R.color.icon_inactive));
-
-                Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
-
-                if (currentFragment instanceof CalendarFragment || currentFragment instanceof MenuFragment) {
-                    openSelectedContent();
-                } else {
-                    loadFragment(new MenuFragment());
-                }
-            }
-        });
-
-        // --- 2. XỬ LÝ KHI BẤM NÚT LỊCH ---
-        btnCalendar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                btnCalendar.setColorFilter(ContextCompat.getColor(MainActivity.this, R.color.red_primary));
-                btnTask.setColorFilter(ContextCompat.getColor(MainActivity.this, R.color.icon_inactive));
-                loadFragment(new CalendarFragment());
-            }
-        });
-
-        // 3. XỬ LÝ NÚT THÊM CÔNG VIỆC (+) ĐỎ
         ImageView btnAddTask = findViewById(R.id.btn_add_task);
+
+        // 2. NHÚNG MENU VÀO NGĂN KÉO
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.menu_drawer_container, new MenuFragment())
+                .commit();
+
+        // 3. Mặc định mở Today
+        loadFragment(new TasksFragment());
+        tvMainTitle.setText("Hôm nay");
+
+        // 4. XỬ LÝ NÚT MỞ MENU (Icon 3 gạch)
+        btnOpenMenu.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                drawerLayout.openDrawer(GravityCompat.START);
+            }
+        });
+
+        // 5. XỬ LÝ THANH ĐIỀU HƯỚNG BOTTOM NAV
+        btnBottomToday.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onMenuItemSelected(0);
+            }
+        });
+
+        btnBottomProfile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onMenuItemSelected(1);
+            }
+        });
+
+        btnBottomCalendar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                loadFragment(new CalendarFragment());
+                tvMainTitle.setText("Lịch");
+                currentMenuSelection = -1; // Đánh dấu đây là tab lịch (không thuộc menu chính)
+            }
+        });
+
+        // 6. XỬ LÝ NÚT THÊM CÔNG VIỆC (+) ĐỎ
         btnAddTask.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -92,7 +116,22 @@ public class MainActivity extends AppCompatActivity {
 
     public void onMenuItemSelected(int selection) {
         currentMenuSelection = selection;
-        openSelectedContent();
+
+        // Đóng menu ngăn kéo lại nếu nó đang mở
+        if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START);
+        }
+
+        if (currentMenuSelection == 0) {
+            loadFragment(new TasksFragment());
+            tvMainTitle.setText("Hôm nay");
+        } else if (currentMenuSelection == 1) {
+            loadFragment(new InboxFragment());
+            tvMainTitle.setText("Profile");
+        } else if (currentMenuSelection == 2) {
+            loadFragment(new Next7DaysFragment());
+            tvMainTitle.setText("7 Ngày Tới");
+        }
     }
 
     private void openSelectedContent() {
@@ -242,10 +281,18 @@ public class MainActivity extends AppCompatActivity {
         }, hour, minute, true);
         timePicker.show();
     }
+
     // --- HÀM MỞ MÀN HÌNH DANH SÁCH CÔNG VIỆC CỦA TỪNG DANH MỤC ---
     public void openListFragment(int taskId, String listName) {
         // Đặt một số bất kỳ (ví dụ số 3) để đánh dấu là không phải Today(0), Inbox(1) hay 7Days(2)
         currentMenuSelection = 3;
+
+        tvMainTitle.setText(listName); // Đổi tiêu đề trên cùng thành tên danh mục
+
+        // Đóng menu ngăn kéo lại
+        if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START);
+        }
 
         // Tạo một cái thùng (Bundle) để nhét ID và Tên vào
         Bundle bundle = new Bundle();

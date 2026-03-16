@@ -77,10 +77,11 @@ public class MenuFragment extends Fragment {
     // --- HÀM TẠO HIỆU ỨNG UX/UI KHI CHẠM NÚT ---
     private void animateAndSwitch(LinearLayout layout, ImageView icon, TextView text, int selectionIndex, MainActivity mainActivity) {
         // Bước 1: Đổi màu nền, màu icon và màu chữ sang tông đỏ ngay khi chạm vào
-        layout.setBackgroundColor(Color.parseColor("#FFEBEE"));
-        icon.setColorFilter(Color.parseColor("#FF5252"));
-        text.setTextColor(Color.parseColor("#FF5252"));
-
+        layout.setBackgroundColor(Color.parseColor("#33FFFFFF"));
+        //icon.setColorFilter(Color.parseColor("#33FFFFFF"));
+        //text.setTextColor(Color.parseColor("#33FFFFFF"));
+        icon.setColorFilter(Color.WHITE);
+        text.setTextColor(Color.WHITE);
         // Bước 2: Hẹn đồng hồ 200 mili-giây (0.2 giây)
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
 
@@ -93,10 +94,12 @@ public class MenuFragment extends Fragment {
             layout.setBackgroundResource(outValue.resourceId); // Trả lại hiệu ứng gợn sóng mặc định
 
             icon.clearColorFilter(); // Bỏ bộ lọc màu đỏ của icon
-            text.setTextColor(Color.parseColor("#333333")); // Trả chữ về màu đen xám
+            text.setTextColor(Color.parseColor("#FFFFFF")); // Trả chữ về màu đen xám
 
         }, 200); // Bạn có thể sửa số 200 này to hơn nếu muốn hiệu ứng hiển thị lâu hơn
     }
+
+
 
     // --- HÀM TẢI DỮ LIỆU TỪ SQLITE LÊN MENU ---
     private void loadListsToMenu() {
@@ -104,23 +107,24 @@ public class MenuFragment extends Fragment {
         List<Task> tasks = dbHelper.getAllTasks();
 
         for (Task task : tasks) {
-            TextView tvList = new TextView(requireContext());
-            tvList.setText("• " + task.getTitle());
-            tvList.setTextSize(15f);
-            tvList.setTextColor(Color.parseColor("#444444"));
-            tvList.setPadding(0, 16, 0, 16);
+            // 1. THAY ĐỔI LỚN NHẤT: Bơm (inflate) file XML giao diện đẹp vào đây thay vì dùng TextView thuần
+            View itemView = LayoutInflater.from(requireContext()).inflate(R.layout.item_menu_task, layoutDynamicLists, false);
 
-            // BẮT SỰ KIỆN CLICK VÀ LÀM HIGHLIGHT
-            tvList.setOnClickListener(v -> {
-                // UX/UI: Đổi nền sang đỏ nhạt và chữ đỏ ngay lập tức để báo hiệu đã bấm trúng
-                tvList.setBackgroundColor(Color.parseColor("#FFEBEE"));
-                tvList.setTextColor(Color.parseColor("#FF5252"));
+            // 2. Tìm cái TextView bên trong giao diện vừa bơm lên và set tên Task
+            TextView tvTaskName = itemView.findViewById(R.id.tv_menu_task_name);
+            tvTaskName.setText(task.getTitle());
+
+            // 3. BẮT SỰ KIỆN CLICK (Gắn vào itemView - tức là bấm vào đâu trên dòng đó cũng ăn)
+            itemView.setOnClickListener(v -> {
+                // UX/UI: Đổi nền sang đỏ nhạt ngay lập tức để báo hiệu đã bấm trúng
+                itemView.setBackgroundColor(Color.parseColor("#33FFFFFF"));
 
                 // Hẹn giờ 0.2s y hệt như các nút Today, Inbox...
                 new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                    // Trả lại màu chữ cũ để lát mở Menu ra nó không bị kẹt màu đỏ mãi
-                    tvList.setBackgroundColor(Color.TRANSPARENT);
-                    tvList.setTextColor(Color.parseColor("#444444"));
+                    // Trả lại hiệu ứng gợn sóng (ripple) mặc định để lần sau không bị kẹt màu
+                    TypedValue outValue = new TypedValue();
+                    requireContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
+                    itemView.setBackgroundResource(outValue.resourceId);
 
                     // Gọi Tổng đài MainActivity chuyển màn hình
                     MainActivity mainActivity = (MainActivity) getActivity();
@@ -130,27 +134,25 @@ public class MenuFragment extends Fragment {
                 }, 200);
             });
 
-            // CÀI ĐẶT UX: NHẤN GIỮ LÂU HIỆN MENU SỬA/XÓA
-            tvList.setOnLongClickListener(v -> {
-                // Tạo 2 lựa chọn cho người dùng
+            // 4. CÀI ĐẶT UX: NHẤN GIỮ LÂU HIỆN MENU SỬA/XÓA
+            itemView.setOnLongClickListener(v -> {
                 CharSequence[] options = new CharSequence[]{"Sửa tên", "Xóa danh mục"};
 
                 new android.app.AlertDialog.Builder(requireContext())
                         .setTitle("Tùy chọn: " + task.getTitle())
                         .setItems(options, (dialog, which) -> {
                             if (which == 0) {
-                                // Người dùng bấm mục đầu tiên (Sửa tên) -> Gọi hàm Sửa
                                 showEditNameDialog(task);
                             } else if (which == 1) {
-                                // Người dùng bấm mục thứ hai (Xóa) -> Gọi hàm Xóa
                                 showDeleteConfirmDialog(task);
                             }
                         })
                         .show();
-                return true;
+                return true; // Trả về true để hệ thống biết mình đã xử lý xong sự kiện nhấn giữ
             });
 
-            layoutDynamicLists.addView(tvList);
+            // 5. Cuối cùng, nhét toàn bộ dòng giao diện (đã có hình tròn, chữ trắng đậm, sự kiện bấm) vào giá sách
+            layoutDynamicLists.addView(itemView);
         }
     }
 

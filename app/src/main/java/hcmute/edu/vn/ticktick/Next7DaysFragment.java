@@ -30,11 +30,6 @@ public class Next7DaysFragment extends Fragment {
         // Tái sử dụng giao diện fragment_tasks.xml
         View view = inflater.inflate(R.layout.fragment_tasks, container, false);
 
-        // 1. Đổi tiêu đề thành "7 Ngày Tới"
-        TextView tvTitle = view.findViewById(R.id.tv_title);
-        if (tvTitle != null) {
-            tvTitle.setText("7 Ngày Tới");
-        }
 
         // 2. Tìm cái "băng chuyền" (RecyclerView) và cài đặt chiều dọc
         recyclerView = view.findViewById(R.id.recycler_tasks);

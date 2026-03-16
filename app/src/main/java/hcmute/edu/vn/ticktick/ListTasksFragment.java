@@ -28,11 +28,6 @@ public class ListTasksFragment extends Fragment {
             taskName = getArguments().getString("TASK_NAME");
         }
 
-        // 2. Đổi tên Tiêu đề màn hình thành Tên của danh mục (VD: "Học bài")
-        TextView tvTitle = view.findViewById(R.id.tv_title);
-        if (tvTitle != null) {
-            tvTitle.setText(taskName);
-        }
 
         // 3. Cài đặt RecyclerView
         RecyclerView recyclerView = view.findViewById(R.id.recycler_tasks);

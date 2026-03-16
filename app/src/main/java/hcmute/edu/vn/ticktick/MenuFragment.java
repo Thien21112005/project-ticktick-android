@@ -52,6 +52,11 @@ public class MenuFragment extends Fragment {
         ImageView btnAddList = view.findViewById(R.id.btn_add_list);
         layoutDynamicLists = view.findViewById(R.id.layout_dynamic_lists);
 
+        // Tìm ID nút Lịch sử
+        LinearLayout btnHistory = view.findViewById(R.id.menu_item_history);
+        ImageView iconHistory = view.findViewById(R.id.icon_history);
+        TextView textHistory = view.findViewById(R.id.text_history);
+
         // 2. BẮT SỰ KIỆN KHI BẤM VÀO CÁC MỤC (Gọi hàm hiệu ứng thay vì chuyển ngay lập tức)
         btnToday.setOnClickListener(v -> {
             if (mainActivity != null) animateAndSwitch(btnToday, iconToday, textToday, 0, mainActivity);
@@ -63,6 +68,10 @@ public class MenuFragment extends Fragment {
 
         btnNext7Days.setOnClickListener(v -> {
             if (mainActivity != null) animateAndSwitch(btnNext7Days, icon7Days, text7Days, 2, mainActivity);
+        });
+
+        btnHistory.setOnClickListener(v -> {
+            if (mainActivity != null) animateAndSwitch(btnHistory, iconHistory, textHistory, 3, mainActivity);
         });
 
         // 3. TẢI CÁC DANH MỤC (Học bài, Thể thao...) LÊN MENU

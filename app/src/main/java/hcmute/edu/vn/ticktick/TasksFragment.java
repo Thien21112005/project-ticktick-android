@@ -52,7 +52,13 @@ public class TasksFragment extends Fragment {
         }
 
         // 5. Đưa danh sách ĐÃ LỌC cho "Người công nhân" (Adapter)
-        taskAdapter = new TaskAdapter(todaySubTasks);
+        taskAdapter = new TaskAdapter(todaySubTasks, new TaskAdapter.OnTaskEditListener() {
+            @Override
+            public void onEditClick(SubTask subTask) {
+                // Ép kiểu Activity hiện tại về MainActivity và gọi hàm hiển thị hộp thoại
+                ((MainActivity) getActivity()).showEditSubTaskDialog(subTask);
+            }
+        });
         recyclerView.setAdapter(taskAdapter);
 
         return view;

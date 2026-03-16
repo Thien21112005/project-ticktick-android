@@ -5,11 +5,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
+import hcmute.edu.vn.ticktick.database.DatabaseHelper;
 import hcmute.edu.vn.ticktick.models.SubTask;
 
 public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder> {
@@ -18,8 +20,9 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
     private List<SubTask> subTaskList;
 
     // Hàm khởi tạo: Nhận mảng dữ liệu SubTask truyền vào
-    public TaskAdapter(List<SubTask> subTaskList) {
+    public TaskAdapter(List<SubTask> subTaskList, OnTaskEditListener editListener) {
         this.subTaskList = subTaskList;
+        this.editListener = editListener; // Cất bộ đàm vào túi để lát dùng
     }
 
     // 2. Tạo ra cái khung (Bơm file item_task.xml mới làm ở Bước 1 vào)
@@ -38,26 +41,28 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
         // Nếu là món hàng đầu tiên (position == 0)
         // HOẶC món hàng này thuộc danh mục khác với món hàng đứng ngay trước nó
         if (position == 0 || subTaskList.get(position - 1).getTaskId() != subTask.getTaskId()) {
-            holder.tvCategoryHeader.setVisibility(View.VISIBLE); // Bật dòng chữ đỏ to đùng lên
-            holder.tvCategoryHeader.setText(subTask.getTaskName()); // In tên danh mục ra (Ví dụ: "Học tập")
+
+            // Nếu tên danh mục bị rỗng (ví dụ khi đang xem bên trong 1 danh mục cụ thể),
+            // thì ta cũng giấu luôn cái hộp đi cho đẹp, không để lại đường gạch ngang vô duyên.
+            if (subTask.getTaskName() == null || subTask.getTaskName().isEmpty()) {
+                holder.layoutCategoryHeader.setVisibility(View.GONE);
+            } else {
+                // Nếu có tên danh mục đàng hoàng (như ở tab Hôm Nay), thì hiện cả hộp (chữ + đường gạch) lên
+                holder.layoutCategoryHeader.setVisibility(View.VISIBLE);
+                holder.tvCategoryHeader.setText(subTask.getTaskName());
+            }
+
         } else {
-            // Nếu nó cùng nhóm với công việc bên trên thì giấu cái tiêu đề đi cho đỡ rối mắt
-            holder.tvCategoryHeader.setVisibility(View.GONE);
+            // Nếu cùng danh mục với công việc bên trên -> Giấu nguyên cả cái hộp đi
+            holder.layoutCategoryHeader.setVisibility(View.GONE);
         }
-        // ----------------------------------------------------------------------
 
         // Đặt chữ cho Tiêu đề và Thời gian
         holder.tvTitle.setText(subTask.getTitle());
         holder.tvTime.setText(subTask.getStartDateTime());
         String due = subTask.getDueDateTime();
-//        if (due != null && !due.trim().isEmpty() && !due.contains("Chọn")) {
-//            holder.tvDue.setVisibility(View.VISIBLE);
-//            holder.tvDue.setText("⏳ Hạn: " + due);
-//        } else {
-//            holder.tvDue.setVisibility(View.GONE);
-//        }
 
-        // LƯU Ý QUAN TRỌNG: Gỡ sự kiện cũ ra trước khi gán trạng thái mới để tránh lỗi hiển thị lộn xộn
+        // Gỡ sự kiện cũ ra trước khi gán trạng thái mới để tránh lỗi hiển thị lộn xộn
         holder.cbDone.setOnCheckedChangeListener(null);
 
         // Cài đặt nút tick là đã tick hay chưa dựa vào dữ liệu
@@ -73,7 +78,16 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
             // Kích hoạt ngay hiệu ứng gạch ngang chữ cho đã mắt
             //applyStrikeThrough(holder.tvTitle, isChecked);
 
-            // (Tương lai chúng ta sẽ thêm 1 dòng code ở đây để lưu trạng thái này xuống Database)
+            DatabaseHelper db = new DatabaseHelper(buttonView.getContext());
+            db.updateSubTask(subTask);
+        });
+
+        // 5. Lắng nghe hành động bấm nút cây bút
+        holder.btnEdit.setOnClickListener(v -> {
+            if (editListener != null) {
+                // Gọi điện báo tin về cho Activity/Fragment kèm theo thông tin của SubTask này
+                editListener.onEditClick(subTask);
+            }
         });
     }
 
@@ -100,13 +114,23 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
         TextView tvTitle, tvTime, tvCategoryHeader; //
         CheckBox cbDone;
         TextView tvDue;
-
+        ImageView btnEdit;
+        android.widget.LinearLayout layoutCategoryHeader;
         public TaskViewHolder(@NonNull View itemView) {
             super(itemView);
             tvTitle = itemView.findViewById(R.id.tv_item_title);
             tvTime = itemView.findViewById(R.id.tv_item_time);
             cbDone = itemView.findViewById(R.id.cb_task_done);
-            tvCategoryHeader = itemView.findViewById(R.id.tv_category_header); // <-- ÁNH XẠ ID Ở ĐÂY
+            tvCategoryHeader = itemView.findViewById(R.id.tv_category_header);
+            btnEdit = itemView.findViewById(R.id.btn_edit_task);
+            layoutCategoryHeader = itemView.findViewById(R.id.layout_category_header);
         }
     }
+
+    // BỘ ĐÀM BÁO TIN SỰ KIỆN CẬP NHẬT HOẶC XOÁ SUBTASK
+    public interface OnTaskEditListener {
+        void onEditClick(SubTask subTask);
+    }
+
+    private OnTaskEditListener editListener;
 }

@@ -35,7 +35,6 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
     public void onBindViewHolder(@NonNull TaskViewHolder holder, int position) {
         SubTask subTask = subTaskList.get(position); // Lấy công việc ở vị trí hiện tại
 
-        // --- ĐOẠN CODE MỚI: XỬ LÝ ẨN/HIỆN TIÊU ĐỀ DANH MỤC (GOM NHÓM UX/UI) ---
         // Nếu là món hàng đầu tiên (position == 0)
         // HOẶC món hàng này thuộc danh mục khác với món hàng đứng ngay trước nó
         if (position == 0 || subTaskList.get(position - 1).getTaskId() != subTask.getTaskId()) {
@@ -51,12 +50,12 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
         holder.tvTitle.setText(subTask.getTitle());
         holder.tvTime.setText(subTask.getStartDateTime());
         String due = subTask.getDueDateTime();
-        if (due != null && !due.trim().isEmpty() && !due.contains("Chọn")) {
-            holder.tvDue.setVisibility(View.VISIBLE);
-            holder.tvDue.setText("⏳ Hạn: " + due);
-        } else {
-            holder.tvDue.setVisibility(View.GONE);
-        }
+//        if (due != null && !due.trim().isEmpty() && !due.contains("Chọn")) {
+//            holder.tvDue.setVisibility(View.VISIBLE);
+//            holder.tvDue.setText("⏳ Hạn: " + due);
+//        } else {
+//            holder.tvDue.setVisibility(View.GONE);
+//        }
 
         // LƯU Ý QUAN TRỌNG: Gỡ sự kiện cũ ra trước khi gán trạng thái mới để tránh lỗi hiển thị lộn xộn
         holder.cbDone.setOnCheckedChangeListener(null);
@@ -65,14 +64,14 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
         holder.cbDone.setChecked(subTask.isDone());
 
         // Gọi hàm hiệu ứng gạch ngang chữ (UX/UI)
-        applyStrikeThrough(holder.tvTitle, subTask.isDone());
+        //applyStrikeThrough(holder.tvTitle, subTask.isDone());
 
         // 4. Lắng nghe hành động: Khi người dùng lấy tay bấm vào nút Checkbox
         holder.cbDone.setOnCheckedChangeListener((buttonView, isChecked) -> {
             // Cập nhật lại trạng thái của công việc
             subTask.setDone(isChecked);
             // Kích hoạt ngay hiệu ứng gạch ngang chữ cho đã mắt
-            applyStrikeThrough(holder.tvTitle, isChecked);
+            //applyStrikeThrough(holder.tvTitle, isChecked);
 
             // (Tương lai chúng ta sẽ thêm 1 dòng code ở đây để lưu trạng thái này xuống Database)
         });
@@ -108,7 +107,6 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
             tvTime = itemView.findViewById(R.id.tv_item_time);
             cbDone = itemView.findViewById(R.id.cb_task_done);
             tvCategoryHeader = itemView.findViewById(R.id.tv_category_header); // <-- ÁNH XẠ ID Ở ĐÂY
-            tvDue = itemView.findViewById(R.id.tv_item_due);
         }
     }
 }

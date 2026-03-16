@@ -187,4 +187,74 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
         return list;
     }
+
+    // --- HÀM CẬP NHẬT (SỬA) CÔNG VIỆC ---
+    // --- HÀM CẬP NHẬT (SỬA) CÔNG VIỆC ---
+    public int updateSubTask(SubTask subTask) {
+        // 1. Xin quyền ghi vào database (mở kho ra)
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        // 2. Tạo một cái thùng chứa các giá trị mới
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_SUBTASK_TITLE, subTask.getTitle());          // Cập nhật tên
+        values.put(COLUMN_SUBTASK_TASK_ID, subTask.getTaskId());       // Cập nhật danh mục
+        values.put(COLUMN_SUBTASK_TIME, subTask.getStartDateTime());   // Cập nhật ngày giờ bắt đầu
+        values.put(COLUMN_SUBTASK_DUE, subTask.getDueDateTime());      // Cập nhật ngày giờ hạn chót
+        values.put(COLUMN_SUBTASK_NOTIFY, subTask.getNotifyBefore());  // Cập nhật nhắc nhở
+
+        // --- ĐÂY LÀ DÒNG QUAN TRỌNG NHẤT VỪA ĐƯỢC THÊM VÀO ---
+        // Nếu isDone là true thì lưu số 1, false thì lưu số 0
+        values.put(COLUMN_SUBTASK_IS_DONE, subTask.isDone() ? 1 : 0);
+        // ----------------------------------------------------
+
+        // 3. Tiến hành cập nhật vào bảng SubTask.
+        int result = db.update(TABLE_SUBTASK, values, COLUMN_SUBTASK_ID + " = ?",
+                new String[]{String.valueOf(subTask.getId())});
+
+        // 4. Đóng cửa kho lại và trả về kết quả
+        db.close();
+        return result;
+    }
+
+    // --- HÀM XÓA CÔNG VIỆC ---
+    public void deleteSubTask(int subTaskId) {
+        // 1. Xin quyền ghi vào database
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        // 2. Xóa khỏi bảng SubTask nơi mà id bằng với id mình truyền vào
+        db.delete(TABLE_SUBTASK, COLUMN_SUBTASK_ID + " = ?",
+                new String[]{String.valueOf(subTaskId)});
+
+        // 3. Đóng kho
+        db.close();
+    }
+
+    // --- HÀM LẤY DANH SÁCH CÔNG VIỆC ĐÃ HOÀN THÀNH (LỊCH SỬ) ---
+    public List<SubTask> getCompletedSubTasks() {
+        List<SubTask> list = new ArrayList<>();
+
+        // Lệnh SQL: Tìm trong bảng SubTask, nối với bảng Task để lấy tên danh mục.
+        // Điều kiện: isDone = 1 (Đã hoàn thành)
+        // Sắp xếp: Mới nhất đưa lên đầu
+        String query = "SELECT SubTask.*, Task.title FROM " + TABLE_SUBTASK
+                + " INNER JOIN " + TABLE_TASK
+                + " ON SubTask." + COLUMN_SUBTASK_TASK_ID + " = Task." + COLUMN_TASK_ID
+                + " WHERE SubTask." + COLUMN_SUBTASK_IS_DONE + " = 1"
+                + " ORDER BY SubTask." + COLUMN_SUBTASK_TIME + " DESC";
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(query, null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                SubTask subTask = cursorToSubTask(cursor);
+                subTask.setTaskName(cursor.getString(7)); // Lấy cột tên danh mục
+                list.add(subTask);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        db.close();
+
+        return list; // Trả về cái giỏ chứa toàn công việc đã xong
+    }
 }

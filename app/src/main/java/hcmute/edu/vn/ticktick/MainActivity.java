@@ -36,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
     // Khai báo các biến UI mới để dùng chung trong class
     private DrawerLayout drawerLayout;
     private TextView tvMainTitle;
+    private ImageView btnBottomToday, btnBottomCalendar, btnBottomProfile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,9 +59,11 @@ public class MainActivity extends AppCompatActivity {
         tvMainTitle = findViewById(R.id.tv_main_title);
         ImageView btnOpenMenu = findViewById(R.id.btn_open_menu);
 
-        ImageView btnBottomToday = findViewById(R.id.btn_bottom_today);
-        ImageView btnBottomProfile = findViewById(R.id.btn_bottom_profile);
-        ImageView btnBottomCalendar = findViewById(R.id.btn_bottom_calendar);
+        btnBottomToday = findViewById(R.id.btn_bottom_today);
+        btnBottomCalendar = findViewById(R.id.btn_bottom_calendar);
+        btnBottomProfile = findViewById(R.id.btn_bottom_profile);
+        // Mặc định ban đầu trên thanh nav với nút bằng 0
+        updateBottomNavUI(0);
 
         ImageView btnAddTask = findViewById(R.id.btn_add_task);
 
@@ -86,13 +89,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 onMenuItemSelected(0);
-            }
-        });
-
-        btnBottomProfile.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onMenuItemSelected(1);
+                updateBottomNavUI(0); // Hiện viên thuốc ở Today
             }
         });
 
@@ -101,7 +98,17 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 loadFragment(new CalendarFragment());
                 tvMainTitle.setText("Lịch");
-                currentMenuSelection = -1; // Đánh dấu đây là tab lịch (không thuộc menu chính)
+                currentMenuSelection = -1;
+                updateBottomNavUI(1); // Hiện viên thuốc ở Lịch
+            }
+        });
+
+        btnBottomProfile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Giả sử Fragment Profile/Inbox của bạn là index 1
+                onMenuItemSelected(1);
+                updateBottomNavUI(2); // Hiện viên thuốc ở Profile
             }
         });
 
@@ -125,22 +132,33 @@ public class MainActivity extends AppCompatActivity {
         if (currentMenuSelection == 0) {
             loadFragment(new TasksFragment());
             tvMainTitle.setText("Hôm nay");
-        } else if (currentMenuSelection == 1) {
+        }
+        else if (currentMenuSelection == 1) {
             loadFragment(new InboxFragment());
             tvMainTitle.setText("Profile");
-        } else if (currentMenuSelection == 2) {
+        }
+        else if (currentMenuSelection == 2) {
             loadFragment(new Next7DaysFragment());
             tvMainTitle.setText("7 Ngày Tới");
+        }
+        else if (currentMenuSelection == 3) {
+            loadFragment(new HistoryFragment());
+            tvMainTitle.setText("Lịch sử");
         }
     }
 
     private void openSelectedContent() {
         if (currentMenuSelection == 0) {
             loadFragment(new TasksFragment());
-        } else if (currentMenuSelection == 1) {
+        }
+        else if (currentMenuSelection == 1) {
             loadFragment(new InboxFragment());
-        } else if (currentMenuSelection == 2) {
+        }
+        else if (currentMenuSelection == 2) {
             loadFragment(new Next7DaysFragment());
+        }
+        else if (currentMenuSelection == 3) {
+            loadFragment(new HistoryFragment());
         }
     }
 
@@ -177,9 +195,15 @@ public class MainActivity extends AppCompatActivity {
         TextView tvDueDate = dialog.findViewById(R.id.tv_due_date);
         TextView tvDueTime = dialog.findViewById(R.id.tv_due_time);
 
-        // --- ĐOẠN CODE MỚI THÊM 1: Ánh xạ Menu xổ xuống của Nhắc nhở ---
+        // Ánh xạ nút X
+        ImageView btnClose = dialog.findViewById(R.id.btn_close_dialog);
+        // Bắt sự kiện nút X để thoát
+        btnClose.setOnClickListener(v -> {
+            dialog.dismiss(); // Lệnh tắt hộp thoại ngay lập tức
+        });
+
+        // Ánh xạ Menu xổ xuống của Nhắc nhở
         android.widget.AutoCompleteTextView autoCompleteNotify = dialog.findViewById(R.id.autoComplete_notify_before);
-        // --------------------------------------------------------------
 
         // Bước 2: Đổ tên các Danh mục vào Spinner (Menu thả xuống)
         List<String> taskNames = new ArrayList<>();
@@ -305,5 +329,154 @@ public class MainActivity extends AppCompatActivity {
 
         // Ra lệnh chuyển màn hình
         loadFragment(fragment);
+    }
+
+    // --- HÀM HIỂN THỊ HỘP THOẠI SỬA CÔNG VIỆC ---
+    public void showEditSubTaskDialog(SubTask subTask) {
+        DatabaseHelper db = new DatabaseHelper(this);
+        List<Task> allTasks = db.getAllTasks();
+
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_edit_task); // Dùng layout mới tạo ở Bước 2
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+        // 1. Ánh xạ các thành phần
+        Spinner spinnerCategory = dialog.findViewById(R.id.spinner_task_category);
+        EditText edtTitle = dialog.findViewById(R.id.edt_task_title);
+        TextView tvStartDate = dialog.findViewById(R.id.tv_start_date);
+        TextView tvStartTime = dialog.findViewById(R.id.tv_start_time);
+        TextView tvDueDate = dialog.findViewById(R.id.tv_due_date);
+        TextView tvDueTime = dialog.findViewById(R.id.tv_due_time);
+        android.widget.AutoCompleteTextView autoCompleteNotify = dialog.findViewById(R.id.autoComplete_notify_before);
+        Button btnUpdate = dialog.findViewById(R.id.btn_update_task); // Nút cập nhật
+        Button btnDelete = dialog.findViewById(R.id.btn_delete_task); // Nút xóa
+
+        // 2. Đổ dữ liệu các Danh mục vào Spinner và chọn đúng danh mục cũ
+        List<String> taskNames = new ArrayList<>();
+        int selectedIndex = 0;
+        for (int i = 0; i < allTasks.size(); i++) {
+            taskNames.add(allTasks.get(i).getTitle());
+            // Nếu ID danh mục trùng với ID mà công việc này đang lưu thì ghi nhớ vị trí
+            if (allTasks.get(i).getId() == subTask.getTaskId()) {
+                selectedIndex = i;
+            }
+        }
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, taskNames);
+        spinnerCategory.setAdapter(adapter);
+        spinnerCategory.setSelection(selectedIndex); // Hiển thị đúng danh mục cũ
+
+        // 3. Điền sẵn các thông tin cũ của công việc vào form
+        edtTitle.setText(subTask.getTitle());
+
+        // Tách ngày và giờ từ chuỗi startDateTime (Ví dụ: "8/3/2026 10:05" -> Tách thành "8/3/2026" và "10:05")
+        if (subTask.getStartDateTime() != null && subTask.getStartDateTime().contains(" ")) {
+            String[] parts = subTask.getStartDateTime().split(" ");
+            tvStartDate.setText(parts[0]);
+            tvStartTime.setText(parts[1]);
+        }
+
+        if (subTask.getDueDateTime() != null && subTask.getDueDateTime().contains(" ")) {
+            String[] parts = subTask.getDueDateTime().split(" ");
+            tvDueDate.setText(parts[0]);
+            tvDueTime.setText(parts[1]);
+        }
+
+        // Cài đặt Nhắc nhở cũ
+        String[] notifyOptions = {"Không nhắc", "Trước 1 phút", "Trước 30 phút", "Trước 1 giờ", "Trước 1 ngày"};
+        int[] notifyValues = {0, 1, 30, 60, 1440};
+        ArrayAdapter<String> notifyAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, notifyOptions);
+        autoCompleteNotify.setAdapter(notifyAdapter);
+
+        final int[] selectedNotifyValue = {subTask.getNotifyBefore()};
+        for (int i = 0; i < notifyValues.length; i++) {
+            if (notifyValues[i] == subTask.getNotifyBefore()) {
+                autoCompleteNotify.setText(notifyOptions[i], false); // Điền thông số cũ
+                break;
+            }
+        }
+
+        autoCompleteNotify.setOnItemClickListener((parent, view, position, id) -> {
+            selectedNotifyValue[0] = notifyValues[position];
+        });
+
+        // Xử lý Lịch và Đồng hồ (Giữ nguyên như cũ)
+        tvStartDate.setOnClickListener(v -> showDatePicker(tvStartDate));
+        tvStartTime.setOnClickListener(v -> showTimePicker(tvStartTime));
+        tvDueDate.setOnClickListener(v -> showDatePicker(tvDueDate));
+        tvDueTime.setOnClickListener(v -> showTimePicker(tvDueTime));
+
+        // 4. BẮT SỰ KIỆN NÚT "CẬP NHẬT"
+        btnUpdate.setOnClickListener(v -> {
+            String title = edtTitle.getText().toString().trim();
+            if (title.isEmpty()) {
+                Toast.makeText(this, "Hãy nhập tên công việc!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            int selectedPos = spinnerCategory.getSelectedItemPosition();
+            int selectedTaskId = allTasks.get(selectedPos).getId();
+
+            // Cập nhật lại đối tượng subTask
+            subTask.setTaskId(selectedTaskId);
+            subTask.setTitle(title);
+            subTask.setStartDateTime(tvStartDate.getText().toString() + " " + tvStartTime.getText().toString());
+            subTask.setNotifyBefore(selectedNotifyValue[0]);
+
+            String dDate = tvDueDate.getText().toString();
+            String dTime = tvDueTime.getText().toString();
+            if (!dDate.contains("Chọn") && !dTime.contains("Chọn")) {
+                subTask.setDueDateTime(dDate + " " + dTime);
+            }
+
+            // Lưu xuống SQLite
+            db.updateSubTask(subTask);
+
+            // Xóa lịch cũ và đặt lại lịch nhắc nhở mới
+            WorkManagerScheduler.cancelNotification(this, subTask.getId());
+            WorkManagerScheduler.scheduleNotification(this, subTask);
+
+            Toast.makeText(this, "Đã cập nhật công việc!", Toast.LENGTH_SHORT).show();
+            dialog.dismiss();
+
+            // Refresh lại màn hình hiện tại để thấy thay đổi (bằng hàm bạn đã viết)
+            openSelectedContent();
+        });
+
+        // 5. BẮT SỰ KIỆN NÚT "XÓA BỎ"
+        btnDelete.setOnClickListener(v -> {
+            // Hiển thị một hộp thoại xác nhận nhỏ cho chắc chắn
+            new android.app.AlertDialog.Builder(this)
+                    .setTitle("Xác nhận xóa")
+                    .setMessage("Bạn có chắc muốn xóa công việc này?")
+                    .setPositiveButton("Xóa", (d, which) -> {
+                        db.deleteSubTask(subTask.getId()); // Xóa trong Database
+                        WorkManagerScheduler.cancelNotification(this, subTask.getId()); // Hủy nhắc nhở
+                        Toast.makeText(this, "Đã xóa công việc!", Toast.LENGTH_SHORT).show();
+                        dialog.dismiss();
+                        openSelectedContent(); // Refresh lại danh sách
+                    })
+                    .setNegativeButton("Hủy", null)
+                    .show();
+        });
+
+        dialog.show();
+    }
+
+    // Hiệu ứng viên thuốc khi chọn btn trên thanh nav
+    private void updateBottomNavUI(int position) {
+        // Xóa toàn bộ nền cũ của 3 nút
+        btnBottomToday.setBackgroundResource(0);
+        btnBottomCalendar.setBackgroundResource(0);
+        btnBottomProfile.setBackgroundResource(0);
+
+        // Dựa vào vị trí đang chọn (0: Today, 1: Calendar, 2: Profile) để set nền mới
+        if (position == 0) {
+            btnBottomToday.setBackgroundResource(R.drawable.bg_nav_selected);
+        } else if (position == 1) {
+            btnBottomCalendar.setBackgroundResource(R.drawable.bg_nav_selected);
+        } else if (position == 2) {
+            btnBottomProfile.setBackgroundResource(R.drawable.bg_nav_selected);
+        }
     }
 }

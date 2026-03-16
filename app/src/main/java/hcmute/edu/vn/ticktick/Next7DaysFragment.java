@@ -79,7 +79,13 @@ public class Next7DaysFragment extends Fragment {
         }
 
         // 4. Giao cái giỏ đã lọc xong cho Adapter hiển thị lên màn hình
-        taskAdapter = new TaskAdapter(next7DaysTasks);
+        taskAdapter = new TaskAdapter(next7DaysTasks, new TaskAdapter.OnTaskEditListener() {
+            @Override
+            public void onEditClick(SubTask subTask) {
+                // Ép kiểu Activity hiện tại về MainActivity và gọi hàm hiển thị hộp thoại
+                ((MainActivity) getActivity()).showEditSubTaskDialog(subTask);
+            }
+        });
         recyclerView.setAdapter(taskAdapter);
 
         return view;

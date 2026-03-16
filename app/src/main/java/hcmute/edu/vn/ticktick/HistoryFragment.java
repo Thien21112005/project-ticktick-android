@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -12,46 +11,31 @@ import java.util.List;
 import hcmute.edu.vn.ticktick.database.DatabaseHelper;
 import hcmute.edu.vn.ticktick.models.SubTask;
 
-public class ListTasksFragment extends Fragment {
-
-    private int taskId;
-    private String taskName;
+public class HistoryFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        // Tái sử dụng lại layout cũ cho tiết kiệm thời gian
+        // Tái sử dụng giao diện danh sách có sẵn
         View view = inflater.inflate(R.layout.fragment_tasks, container, false);
 
-        // 1. Nhận gói hàng (Bundle) chứa ID và Tên danh mục từ MainActivity gửi qua
-        if (getArguments() != null) {
-            taskId = getArguments().getInt("TASK_ID");
-            taskName = getArguments().getString("TASK_NAME");
-        }
-
-
-        // 3. Cài đặt RecyclerView
         RecyclerView recyclerView = view.findViewById(R.id.recycler_tasks);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // 4. Lấy dữ liệu từ Database theo ID và đưa lên màn hình
+        // Gọi kho dữ liệu lấy các công việc ĐÃ XONG
         DatabaseHelper databaseHelper = new DatabaseHelper(getContext());
-        List<SubTask> subTasks = databaseHelper.getSubTasksByTaskId(taskId);
+        List<SubTask> completedTasks = databaseHelper.getCompletedSubTasks();
 
-        // --- ĐOẠN CODE ĐƯỢC THAY ĐỔI Ở ĐÂY ---
-        // Truyền thêm bộ đàm (OnTaskEditListener) vào cho Adapter
-        TaskAdapter taskAdapter = new TaskAdapter(subTasks, new TaskAdapter.OnTaskEditListener() {
+        // Giao cho anh công nhân Adapter vẽ lên màn hình, kèm theo cái bộ đàm sửa công việc
+        TaskAdapter taskAdapter = new TaskAdapter(completedTasks, new TaskAdapter.OnTaskEditListener() {
             @Override
             public void onEditClick(SubTask subTask) {
-                // Khi Adapter báo tin có người bấm nút sửa, ta nhờ MainActivity mở hộp thoại Sửa lên
                 if (getActivity() instanceof MainActivity) {
                     ((MainActivity) getActivity()).showEditSubTaskDialog(subTask);
                 }
             }
         });
-        // ------------------------------------
 
         recyclerView.setAdapter(taskAdapter);
-
         return view;
     }
 }

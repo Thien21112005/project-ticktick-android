@@ -25,6 +25,11 @@ public class TasksFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_tasks, container, false);
 
+        android.widget.LinearLayout layoutQuickAdd = view.findViewById(R.id.layout_quick_add);
+        if (layoutQuickAdd != null) {
+            layoutQuickAdd.setVisibility(View.GONE); // GONE nghĩa là biến mất hoàn toàn
+        }
+
         recyclerView = view.findViewById(R.id.recycler_tasks);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         databaseHelper = new DatabaseHelper(getContext());

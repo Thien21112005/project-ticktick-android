@@ -1,9 +1,12 @@
 package hcmute.edu.vn.ticktick;
 
 import android.app.Dialog;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler; // Kéo thêm thư viện Handler để hẹn giờ
 import android.os.Looper;  // Kéo thêm thư viện Looper
@@ -19,6 +22,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+
+import java.io.File;
 import java.util.List;
 
 import hcmute.edu.vn.ticktick.database.DatabaseHelper;
@@ -36,7 +41,7 @@ public class MenuFragment extends Fragment {
 
         dbHelper = new DatabaseHelper(requireContext());
 
-        // 1. TÌM ID CỦA CÁC NÚT VÀ CÁC THÀNH PHẦN BÊN TRONG (Icon, Text)
+        // 1. Tìm các view
         LinearLayout btnToday = view.findViewById(R.id.menu_item_today);
         ImageView iconToday = view.findViewById(R.id.icon_today);
         TextView textToday = view.findViewById(R.id.text_today);
@@ -45,25 +50,16 @@ public class MenuFragment extends Fragment {
         ImageView icon7Days = view.findViewById(R.id.icon_7days);
         TextView text7Days = view.findViewById(R.id.text_7days);
 
-        LinearLayout btnInbox = view.findViewById(R.id.menu_item_inbox);
-        ImageView iconInbox = view.findViewById(R.id.icon_inbox);
-        TextView textInbox = view.findViewById(R.id.text_inbox);
-
-        ImageView btnAddList = view.findViewById(R.id.btn_add_list);
-        layoutDynamicLists = view.findViewById(R.id.layout_dynamic_lists);
-
-        // Tìm ID nút Lịch sử
         LinearLayout btnHistory = view.findViewById(R.id.menu_item_history);
         ImageView iconHistory = view.findViewById(R.id.icon_history);
         TextView textHistory = view.findViewById(R.id.text_history);
 
-        // 2. BẮT SỰ KIỆN KHI BẤM VÀO CÁC MỤC (Gọi hàm hiệu ứng thay vì chuyển ngay lập tức)
+        ImageView btnAddList = view.findViewById(R.id.btn_add_list);
+        layoutDynamicLists = view.findViewById(R.id.layout_dynamic_lists);
+
+        // 2. Bắt sự kiện click menu
         btnToday.setOnClickListener(v -> {
             if (mainActivity != null) animateAndSwitch(btnToday, iconToday, textToday, 0, mainActivity);
-        });
-
-        btnInbox.setOnClickListener(v -> {
-            if (mainActivity != null) animateAndSwitch(btnInbox, iconInbox, textInbox, 1, mainActivity);
         });
 
         btnNext7Days.setOnClickListener(v -> {
@@ -74,11 +70,14 @@ public class MenuFragment extends Fragment {
             if (mainActivity != null) animateAndSwitch(btnHistory, iconHistory, textHistory, 3, mainActivity);
         });
 
-        // 3. TẢI CÁC DANH MỤC (Học bài, Thể thao...) LÊN MENU
+        // 3. Tải danh sách công việc
         loadListsToMenu();
 
-        // 4. SỰ KIỆN KHI BẤM NÚT DẤU CỘNG Ở MỤC LISTS
+        // 4. Nút thêm danh mục
         btnAddList.setOnClickListener(v -> showAddListDialog());
+
+        // === QUAN TRỌNG: Cập nhật avatar + tên mỗi khi mở Menu ===
+        loadProfileToMenu(view);
 
         return view;
     }
@@ -236,7 +235,31 @@ public class MenuFragment extends Fragment {
                 loadListsToMenu();
             }
         });
-
         dialog.show();
+    }
+
+    // Đồng bộ Avatar + Tên từ Profile sang Menu (cập nhật realtime)
+    private void loadProfileToMenu(View view) {
+        SharedPreferences prefs = requireContext().getSharedPreferences("UserProfilePrefs", Context.MODE_PRIVATE);
+
+        com.google.android.material.imageview.ShapeableImageView imgMenuAvatar = view.findViewById(R.id.img_menu_avatar);
+        TextView tvMenuUsername = view.findViewById(R.id.tv_menu_username);
+
+        if (tvMenuUsername != null) {
+            String username = prefs.getString("username", "Nguyễn Ngọc Thiện");
+            tvMenuUsername.setText(username);
+        }
+
+        if (imgMenuAvatar != null) {
+            File avatarFile = new File(requireContext().getFilesDir(), "profile_avatar.jpg");
+            if (avatarFile.exists()) {
+                imgMenuAvatar.setImageURI(Uri.fromFile(avatarFile));
+            }
+        }
+    }
+    public void refreshProfileData() {
+        if (getView() != null) {
+            loadProfileToMenu(getView());
+        }
     }
 }

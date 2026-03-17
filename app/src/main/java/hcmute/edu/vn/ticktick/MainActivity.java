@@ -77,11 +77,10 @@ public class MainActivity extends AppCompatActivity {
         tvMainTitle.setText("Hôm nay");
 
         // 4. XỬ LÝ NÚT MỞ MENU (Icon 3 gạch)
-        btnOpenMenu.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                drawerLayout.openDrawer(GravityCompat.START);
-            }
+        btnOpenMenu.setOnClickListener(v -> {
+            // Refresh MenuFragment trước khi mở drawer
+            refreshMenuFragment();
+            drawerLayout.openDrawer(GravityCompat.START);
         });
 
         // 5. XỬ LÝ THANH ĐIỀU HƯỚNG BOTTOM NAV
@@ -477,6 +476,14 @@ public class MainActivity extends AppCompatActivity {
             btnBottomCalendar.setBackgroundResource(R.drawable.bg_nav_selected);
         } else if (position == 2) {
             btnBottomProfile.setBackgroundResource(R.drawable.bg_nav_selected);
+        }
+    }
+    private void refreshMenuFragment() {
+        MenuFragment menuFragment = (MenuFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.menu_drawer_container);
+
+        if (menuFragment != null) {
+            menuFragment.refreshProfileData();
         }
     }
 }

@@ -134,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
             tvMainTitle.setText("Hôm nay");
         }
         else if (currentMenuSelection == 1) {
-            loadFragment(new InboxFragment());
+            loadFragment(new ProfileFragment());
             tvMainTitle.setText("Profile");
         }
         else if (currentMenuSelection == 2) {
@@ -152,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
             loadFragment(new TasksFragment());
         }
         else if (currentMenuSelection == 1) {
-            loadFragment(new InboxFragment());
+            loadFragment(new ProfileFragment());
         }
         else if (currentMenuSelection == 2) {
             loadFragment(new Next7DaysFragment());

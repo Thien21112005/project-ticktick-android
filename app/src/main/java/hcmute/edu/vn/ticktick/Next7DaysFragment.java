@@ -30,6 +30,10 @@ public class Next7DaysFragment extends Fragment {
         // Tái sử dụng giao diện fragment_tasks.xml
         View view = inflater.inflate(R.layout.fragment_tasks, container, false);
 
+        android.widget.LinearLayout layoutQuickAdd = view.findViewById(R.id.layout_quick_add);
+        if (layoutQuickAdd != null) {
+            layoutQuickAdd.setVisibility(View.GONE);
+        }
 
         // 2. Tìm cái "băng chuyền" (RecyclerView) và cài đặt chiều dọc
         recyclerView = view.findViewById(R.id.recycler_tasks);

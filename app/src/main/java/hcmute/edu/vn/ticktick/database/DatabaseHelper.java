@@ -257,4 +257,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         return list; // Trả về cái giỏ chứa toàn công việc đã xong
     }
+
+    public void updateSubTaskStatus(int subTaskId, boolean isDone) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        android.content.ContentValues values = new android.content.ContentValues();
+
+        // Nếu isDone là true thì lưu số 1, false thì lưu số 0
+        values.put(COLUMN_SUBTASK_IS_DONE, isDone ? 1 : 0);
+
+        // Cập nhật dòng có id tương ứng
+        db.update(TABLE_SUBTASK, values, COLUMN_SUBTASK_ID + " = ?", new String[]{String.valueOf(subTaskId)});
+        db.close();
+    }
 }

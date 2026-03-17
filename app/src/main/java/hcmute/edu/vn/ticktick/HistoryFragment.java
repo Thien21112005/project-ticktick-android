@@ -18,6 +18,12 @@ public class HistoryFragment extends Fragment {
         // Tái sử dụng giao diện danh sách có sẵn
         View view = inflater.inflate(R.layout.fragment_tasks, container, false);
 
+        // Ẩn thanh nhập tên công việc
+        View inputLayout = view.findViewById(R.id.layout_quick_add);
+        if (inputLayout != null) {
+            inputLayout.setVisibility(View.GONE); // Ẩn thanh nhập đi
+        }
+
         RecyclerView recyclerView = view.findViewById(R.id.recycler_tasks);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
@@ -25,8 +31,8 @@ public class HistoryFragment extends Fragment {
         DatabaseHelper databaseHelper = new DatabaseHelper(getContext());
         List<SubTask> completedTasks = databaseHelper.getCompletedSubTasks();
 
-        // Giao cho anh công nhân Adapter vẽ lên màn hình, kèm theo cái bộ đàm sửa công việc
-        TaskAdapter taskAdapter = new TaskAdapter(completedTasks, new TaskAdapter.OnTaskEditListener() {
+        // CHÚ Ý Ở ĐÂY: Truyền thêm chữ "true" vào giữa để báo hiệu đây là màn hình Lịch sử
+        TaskAdapter taskAdapter = new TaskAdapter(completedTasks, true, new TaskAdapter.OnTaskEditListener() {
             @Override
             public void onEditClick(SubTask subTask) {
                 if (getActivity() instanceof MainActivity) {

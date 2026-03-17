@@ -19,10 +19,18 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
     // 1. Đổi "món hàng" từ Task sang SubTask
     private List<SubTask> subTaskList;
 
+    private boolean isHistoryMode = false;
+    private OnTaskEditListener listener;
+
+    public interface OnTaskEditListener {
+        void onEditClick(SubTask subTask);
+    }
+
     // Hàm khởi tạo: Nhận mảng dữ liệu SubTask truyền vào
-    public TaskAdapter(List<SubTask> subTaskList, OnTaskEditListener editListener) {
+    public TaskAdapter(List<SubTask> subTaskList, boolean isHistoryMode, OnTaskEditListener listener) {
         this.subTaskList = subTaskList;
-        this.editListener = editListener; // Cất bộ đàm vào túi để lát dùng
+        this.isHistoryMode = isHistoryMode; // Nhận cờ hiệu từ Fragment truyền vào
+        this.listener = listener;
     }
 
     // 2. Tạo ra cái khung (Bơm file item_task.xml mới làm ở Bước 1 vào)
@@ -36,31 +44,51 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
     // 3. Gắn dữ liệu thật vào cái khung
     @Override
     public void onBindViewHolder(@NonNull TaskViewHolder holder, int position) {
-        SubTask subTask = subTaskList.get(position); // Lấy công việc ở vị trí hiện tại
+        SubTask subTask = subTaskList.get(position);
 
-        // Nếu là món hàng đầu tiên (position == 0)
-        // HOẶC món hàng này thuộc danh mục khác với món hàng đứng ngay trước nó
-        if (position == 0 || subTaskList.get(position - 1).getTaskId() != subTask.getTaskId()) {
+        // 1. XÁC ĐỊNH CÔNG VIỆC ĐẦU NHÓM (Để hiện Tên danh mục và đường gạch)
+        boolean isFirstInGroup = (position == 0 || subTaskList.get(position - 1).getTaskId() != subTask.getTaskId());
 
-            // Nếu tên danh mục bị rỗng (ví dụ khi đang xem bên trong 1 danh mục cụ thể),
-            // thì ta cũng giấu luôn cái hộp đi cho đẹp, không để lại đường gạch ngang vô duyên.
-            if (subTask.getTaskName() == null || subTask.getTaskName().isEmpty()) {
-                holder.layoutCategoryHeader.setVisibility(View.GONE);
-            } else {
-                // Nếu có tên danh mục đàng hoàng (như ở tab Hôm Nay), thì hiện cả hộp (chữ + đường gạch) lên
-                holder.layoutCategoryHeader.setVisibility(View.VISIBLE);
-                holder.tvCategoryHeader.setText(subTask.getTaskName());
-            }
-
+        // 2. LOGIC HIỂN THỊ HEADER (Dù là Lịch sử hay màn hình khác đều hiện nếu là đầu nhóm)
+        if (isFirstInGroup) {
+            // Hiện cả cụm (Chữ + Đường gạch)
+            holder.layoutCategoryHeader.setVisibility(View.VISIBLE);
+            holder.tvCategoryHeader.setVisibility(View.VISIBLE);
+            holder.tvCategoryHeader.setText(subTask.getTaskName());
         } else {
-            // Nếu cùng danh mục với công việc bên trên -> Giấu nguyên cả cái hộp đi
+            // Ẩn để tránh đường gạch dư thừa cho các task cùng nhóm bên dưới
             holder.layoutCategoryHeader.setVisibility(View.GONE);
         }
 
-        // Đặt chữ cho Tiêu đề và Thời gian
+        // 3. LOGIC HIỂN THỊ NÚT BẤM (Tick và Cây bút)
+        if (isHistoryMode) {
+            // Nếu là Lịch sử: Ẩn nút tick và cây bút để chỉ xem, không cho sửa
+            holder.cbDone.setVisibility(View.GONE);
+            holder.btnEdit.setVisibility(View.GONE);
+        } else {
+            // Màn hình bình thường: Hiện đầy đủ để tương tác
+            holder.cbDone.setVisibility(View.VISIBLE);
+            holder.btnEdit.setVisibility(View.VISIBLE);
+
+            // Thiết lập trạng thái Checkbox và sự kiện (giữ nguyên code cũ của bạn)
+            holder.cbDone.setOnCheckedChangeListener(null);
+            holder.cbDone.setChecked(subTask.isDone());
+            holder.cbDone.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                subTask.setDone(isChecked);
+                hcmute.edu.vn.ticktick.database.DatabaseHelper dbHelper =
+                        new hcmute.edu.vn.ticktick.database.DatabaseHelper(buttonView.getContext());
+                dbHelper.updateSubTaskStatus(subTask.getId(), isChecked);
+            });
+
+            // Sự kiện bấm cây bút (giữ nguyên code cũ)
+            holder.btnEdit.setOnClickListener(v -> {
+                if (listener != null) listener.onEditClick(subTask);
+            });
+        }
+
+        // 4. HIỂN THỊ NỘI DUNG TASK
         holder.tvTitle.setText(subTask.getTitle());
         holder.tvTime.setText(subTask.getStartDateTime());
-        String due = subTask.getDueDateTime();
 
         // Gỡ sự kiện cũ ra trước khi gán trạng thái mới để tránh lỗi hiển thị lộn xộn
         holder.cbDone.setOnCheckedChangeListener(null);
@@ -78,15 +106,19 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
             // Kích hoạt ngay hiệu ứng gạch ngang chữ cho đã mắt
             //applyStrikeThrough(holder.tvTitle, isChecked);
 
-            DatabaseHelper db = new DatabaseHelper(buttonView.getContext());
-            db.updateSubTask(subTask);
+            hcmute.edu.vn.ticktick.database.DatabaseHelper dbHelper =
+                    new hcmute.edu.vn.ticktick.database.DatabaseHelper(buttonView.getContext());
+            dbHelper.updateSubTaskStatus(subTask.getId(), isChecked);
         });
 
         // 5. Lắng nghe hành động bấm nút cây bút
-        holder.btnEdit.setOnClickListener(v -> {
-            if (editListener != null) {
-                // Gọi điện báo tin về cho Activity/Fragment kèm theo thông tin của SubTask này
-                editListener.onEditClick(subTask);
+        holder.btnEdit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Nếu bộ đàm không bị hỏng (khác null) thì bấm nút gọi về cho Fragment!
+                if (listener != null) {
+                    listener.onEditClick(subTask);
+                }
             }
         });
     }
@@ -128,9 +160,5 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
     }
 
     // BỘ ĐÀM BÁO TIN SỰ KIỆN CẬP NHẬT HOẶC XOÁ SUBTASK
-    public interface OnTaskEditListener {
-        void onEditClick(SubTask subTask);
-    }
-
     private OnTaskEditListener editListener;
 }

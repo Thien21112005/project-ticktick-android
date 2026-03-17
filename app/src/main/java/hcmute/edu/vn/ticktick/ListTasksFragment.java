@@ -97,9 +97,14 @@ public class ListTasksFragment extends Fragment {
         // Lấy danh sách từ kho dựa theo ID
         List<SubTask> subTasks = databaseHelper.getSubTasksByTaskId(taskId);
         // Gắn vào Adapter
-        taskAdapter = new TaskAdapter(subTasks, task -> {
-            // Tạm thời hiển thị thông báo chữ nhỏ (Toast) khi người dùng bấm nút Sửa
-            Toast.makeText(getContext(), "Bạn muốn sửa: " + task.getTitle(), Toast.LENGTH_SHORT).show();
+        TaskAdapter taskAdapter = new TaskAdapter(subTasks, false, new TaskAdapter.OnTaskEditListener() {
+            @Override
+            public void onEditClick(SubTask subTask) {
+                // Kiểm tra xem Tổng đài có đang hoạt động không, nếu có thì gọi hàm showEditSubTaskDialog
+                if (getActivity() instanceof MainActivity) {
+                    ((MainActivity) getActivity()).showEditSubTaskDialog(subTask);
+                }
+            }
         });
         recyclerView.setAdapter(taskAdapter);
     }

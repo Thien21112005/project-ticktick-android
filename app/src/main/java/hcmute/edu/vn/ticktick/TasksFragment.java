@@ -8,9 +8,11 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 import hcmute.edu.vn.ticktick.database.DatabaseHelper;
 import hcmute.edu.vn.ticktick.models.SubTask;
@@ -42,10 +44,8 @@ public class TasksFragment extends Fragment {
 
         // 3. Lấy ngày hôm nay của điện thoại theo đúng định dạng lúc bạn lưu (d/m/yyyy)
         Calendar calendar = Calendar.getInstance();
-        int day = calendar.get(Calendar.DAY_OF_MONTH);
-        int month = calendar.get(Calendar.MONTH);
-        int year = calendar.get(Calendar.YEAR);
-        String todayDateStr = day + "/" + (month + 1) + "/" + year;
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+        String todayDateStr = sdf.format(calendar.getTime());
 
         // 4. Lọc: Đi dạo một vòng xem công việc nào bắt đầu bằng ngày hôm nay thì nhặt vào giỏ
         for (SubTask task : allSubTasks) {

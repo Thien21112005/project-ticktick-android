@@ -52,6 +52,16 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+        DatabaseHelper db = new DatabaseHelper(this);
+        SubTask test = new SubTask();
+        test.setTaskId(1);
+        test.setTitle("Học Android");
+        test.setStartDateTime("17/03/2026 09:00");
+        test.setDueDateTime("17/03/2026 10:30");
+        test.setDone(false);
+        test.setNotifyBefore(15);
+        db.addSubTask(test);
+
         setContentView(R.layout.activity_main);
 
         // 1. ÁNH XẠ CÁC ID THEO GIAO DIỆN MỚI

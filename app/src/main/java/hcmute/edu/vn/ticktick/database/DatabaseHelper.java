@@ -5,8 +5,14 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.Cursor;
+import android.util.Log;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import hcmute.edu.vn.ticktick.models.SubTask;
 import hcmute.edu.vn.ticktick.models.Task;
@@ -14,7 +20,7 @@ import hcmute.edu.vn.ticktick.models.Task;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "TickTickApp.db";
-    private static final int DATABASE_VERSION = 4; // <-- ĐỔI LÊN 4
+    private static final int DATABASE_VERSION = 5; // <-- ĐỔI LÊN 4
 
     public static final String TABLE_TASK = "Task";
     public static final String COLUMN_TASK_ID = "id";
@@ -66,10 +72,74 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             db.execSQL("ALTER TABLE " + TABLE_SUBTASK +
                     " ADD COLUMN " + COLUMN_SUBTASK_NOTIFY + " INTEGER DEFAULT 0");
         }
-        if (oldVersion < 4) {                                             // <-- THÊM MỚI
+        if (oldVersion < 4) {
             db.execSQL("ALTER TABLE " + TABLE_SUBTASK +
                     " ADD COLUMN " + COLUMN_SUBTASK_DUE + " TEXT");
         }
+        if (oldVersion < 5) {                     // ← MIGRATION MỚI
+            migrateDateFormats(db);
+        }
+    }
+
+    private void migrateDateFormats(SQLiteDatabase db) {
+        SimpleDateFormat targetFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
+        Cursor cursor = db.rawQuery("SELECT " + COLUMN_SUBTASK_ID + ", "
+                + COLUMN_SUBTASK_TIME + ", " + COLUMN_SUBTASK_DUE
+                + " FROM " + TABLE_SUBTASK, null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                int id = cursor.getInt(0);
+                String startStr = cursor.getString(1);
+                String dueStr = cursor.getString(2);
+
+                // Fix startDateTime
+                if (startStr != null) {
+                    try {
+                        Date d = tryParseDate(startStr);
+                        if (d != null) {
+                            ContentValues cv = new ContentValues();
+                            cv.put(COLUMN_SUBTASK_TIME, targetFormat.format(d));
+                            db.update(TABLE_SUBTASK, cv, COLUMN_SUBTASK_ID + " = ?",
+                                    new String[]{String.valueOf(id)});
+                        }
+                    } catch (Exception e) {
+                        Log.e("DB_MIGRATE", "Start fail id=" + id);
+                    }
+                }
+
+                // Fix dueDateTime (nếu có)
+                if (dueStr != null) {
+                    try {
+                        Date d = tryParseDate(dueStr);
+                        if (d != null) {
+                            ContentValues cv = new ContentValues();
+                            cv.put(COLUMN_SUBTASK_DUE, targetFormat.format(d));
+                            db.update(TABLE_SUBTASK, cv, COLUMN_SUBTASK_ID + " = ?",
+                                    new String[]{String.valueOf(id)});
+                        }
+                    } catch (Exception e) {
+                        Log.e("DB_MIGRATE", "Due fail id=" + id);
+                    }
+                }
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        Log.d("DB_MIGRATE", "Migration hoàn tất!");
+    }
+
+    private Date tryParseDate(String str) {
+        SimpleDateFormat[] formats = {
+                new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()),
+                new SimpleDateFormat("d/M/yyyy HH:mm", Locale.getDefault())
+        };
+        for (SimpleDateFormat f : formats) {
+            try {
+                return f.parse(str);
+            } catch (ParseException ignored) {
+            }
+        }
+        return null;
     }
 
     public long addTask(Task task) {
@@ -104,7 +174,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COLUMN_SUBTASK_TASK_ID, subTask.getTaskId());
         values.put(COLUMN_SUBTASK_TITLE, subTask.getTitle());
         values.put(COLUMN_SUBTASK_TIME, subTask.getStartDateTime());
-        values.put(COLUMN_SUBTASK_DUE, subTask.getDueDateTime());         // <-- THÊM MỚI
+        values.put(COLUMN_SUBTASK_DUE, subTask.getDueDateTime());
         values.put(COLUMN_SUBTASK_IS_DONE, subTask.isDone() ? 1 : 0);
         values.put(COLUMN_SUBTASK_NOTIFY, subTask.getNotifyBefore());
         long id = db.insert(TABLE_SUBTASK, null, values);
@@ -131,7 +201,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_SUBTASK, null);
         if (cursor.moveToFirst()) {
-            do { list.add(cursorToSubTask(cursor)); } while (cursor.moveToNext());
+            do {
+                list.add(cursorToSubTask(cursor));
+            } while (cursor.moveToNext());
         }
         cursor.close();
         db.close();
@@ -181,7 +253,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery(query, null);
         if (cursor.moveToFirst()) {
-            do { list.add(cursorToSubTask(cursor)); } while (cursor.moveToNext());
+            do {
+                list.add(cursorToSubTask(cursor));
+            } while (cursor.moveToNext());
         }
         cursor.close();
         db.close();
@@ -268,5 +342,59 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         // Cập nhật dòng có id tương ứng
         db.update(TABLE_SUBTASK, values, COLUMN_SUBTASK_ID + " = ?", new String[]{String.valueOf(subTaskId)});
         db.close();
+    }
+
+    // === THÊM METHOD NÀY VÀO CUỐI CLASS DatabaseHelper ===
+    public List<SubTask> getSubTasksForDay(String dateStr) {
+        List<SubTask> list = new ArrayList<>();
+        String query = "SELECT SubTask.*, Task.title FROM " + TABLE_SUBTASK
+                + " INNER JOIN " + TABLE_TASK
+                + " ON SubTask." + COLUMN_SUBTASK_TASK_ID + " = Task." + COLUMN_TASK_ID
+                + " WHERE SubTask." + COLUMN_SUBTASK_TIME + " LIKE ? "
+                + " ORDER BY SubTask." + COLUMN_SUBTASK_TIME + " ASC";
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(query, new String[]{dateStr + "%"});
+        if (cursor.moveToFirst()) {
+            do {
+                SubTask subTask = cursorToSubTask(cursor);
+                subTask.setTaskName(cursor.getString(7)); // cột 7 = Task.title
+                list.add(subTask);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        db.close();
+        return list;
+    }
+
+    // Thêm vào cuối class DatabaseHelper
+    // Thêm vào cuối class DatabaseHelper
+    public List<SubTask> getSubTasksForDayCovering(String dateStr) {
+        List<SubTask> list = new ArrayList<>();
+        String startPart = "substr(" + COLUMN_SUBTASK_TIME + ", 1, 10)";
+        String duePart = "substr(" + COLUMN_SUBTASK_DUE + ", 1, 10)";
+
+        String query = "SELECT SubTask.*, Task.title FROM " + TABLE_SUBTASK
+                + " INNER JOIN " + TABLE_TASK
+                + " ON SubTask." + COLUMN_SUBTASK_TASK_ID + " = Task." + COLUMN_TASK_ID
+                + " WHERE "
+                + " ( " + COLUMN_SUBTASK_DUE + " IS NOT NULL "
+                + "   AND " + startPart + " <= ? AND " + duePart + " >= ? ) "
+                + " OR "
+                + " ( " + COLUMN_SUBTASK_DUE + " IS NULL AND " + startPart + " = ? ) "
+                + " ORDER BY " + COLUMN_SUBTASK_TIME + " ASC";
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(query, new String[]{dateStr, dateStr, dateStr});
+
+        if (cursor.moveToFirst()) {
+            do {
+                SubTask subTask = cursorToSubTask(cursor);
+                subTask.setTaskName(cursor.getString(7));
+                list.add(subTask);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        db.close();
+        return list;
     }
 }

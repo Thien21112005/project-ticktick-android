@@ -65,7 +65,7 @@ public class ListTasksFragment extends Fragment {
 
             // --- LẤY NGÀY GIỜ HIỆN TẠI THEO CHUẨN CỦA BẠN ---
             // Định dạng này giống hệt thuật toán lọc bạn viết ở Next7DaysFragment
-            SimpleDateFormat sdf = new SimpleDateFormat("d/M/yyyy HH:mm", Locale.getDefault());
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
             String currentDateTime = sdf.format(new Date());
 
             // --- TẠO CÔNG VIỆC MỚI ---

@@ -190,7 +190,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         subTask.setTaskId(cursor.getInt(1));
         subTask.setTitle(cursor.getString(2));
         subTask.setStartDateTime(cursor.getString(3));
-        subTask.setDueDateTime(cursor.getString(4));                      // <-- THÊM MỚI
+        subTask.setDueDateTime(cursor.getString(4));
         subTask.setDone(cursor.getInt(5) == 1);
         subTask.setNotifyBefore(cursor.getInt(6));
         return subTask;

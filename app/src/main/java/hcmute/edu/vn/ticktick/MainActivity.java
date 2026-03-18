@@ -24,6 +24,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import hcmute.edu.vn.ticktick.database.DatabaseHelper;
 import hcmute.edu.vn.ticktick.models.SubTask;
@@ -299,8 +300,14 @@ public class MainActivity extends AppCompatActivity {
         int year = calendar.get(java.util.Calendar.YEAR);
 
         android.app.DatePickerDialog datePicker = new android.app.DatePickerDialog(this, (view, y, m, d) -> {
-            textView.setText(d + "/" + (m + 1) + "/" + y);
+            // --- SỬA Ở ĐÂY ---
+            // %02d nghĩa là: Dành ra 2 chỗ trống để in số nguyên (d). Nếu số đó chỉ có 1 chữ số (vd số 3), thì nhét số 0 vào trước (thành 03).
+            String formattedDate = String.format(Locale.getDefault(), "%02d/%02d/%04d", d, m + 1, y);
+            textView.setText(formattedDate);
+            // -----------------
         }, year, month, day);
+
+        datePicker.getDatePicker().setMinDate(System.currentTimeMillis() - 1000);
         datePicker.show();
     }
 

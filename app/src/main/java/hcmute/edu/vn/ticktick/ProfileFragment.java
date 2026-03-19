@@ -39,11 +39,14 @@ public class ProfileFragment extends Fragment {
     private static final String AVATAR_FILE_NAME = "profile_avatar.jpg";
 
     private ShapeableImageView imgAvatar;
-    private TextView tvUsernameDisplay, tvEmailDisplay, tvJoinDate;
+
+    private TextView tvUsernameDisplay, tvEmailDisplay, tvJoinDate, tvCompletedTasks;
     private EditText edtUsername, edtEmail;
 
     private SharedPreferences prefs;
     private ActivityResultLauncher<String> pickImageLauncher;
+
+
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -73,6 +76,7 @@ public class ProfileFragment extends Fragment {
         tvEmailDisplay = view.findViewById(R.id.tv_email_display);
         edtEmail = view.findViewById(R.id.edt_email);
         tvJoinDate = view.findViewById(R.id.tv_join_date);
+        tvCompletedTasks = view.findViewById(R.id.tv_completed_tasks);
 
         loadProfileData();
 
@@ -181,5 +185,17 @@ public class ProfileFragment extends Fragment {
         tvJoinDate.setText(joinDate);
 
         loadAvatarFromFile();
+
+        // 1. Gọi DatabaseHelper
+        hcmute.edu.vn.ticktick.database.DatabaseHelper dbHelper =
+                new hcmute.edu.vn.ticktick.database.DatabaseHelper(requireContext());
+
+        java.util.List<hcmute.edu.vn.ticktick.models.SubTask> completedTasks = dbHelper.getCompletedSubTasks();
+
+        // 3. Đếm số lượng task đã hoàn thành
+        int totalCompleted = completedTasks.size();
+
+        // 4. In con số vừa đếm được lên màn hình
+        tvCompletedTasks.setText(String.valueOf(totalCompleted));
     }
 }

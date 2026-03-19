@@ -263,7 +263,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     // --- HÀM CẬP NHẬT (SỬA) CÔNG VIỆC ---
-    // --- HÀM CẬP NHẬT (SỬA) CÔNG VIỆC ---
     public int updateSubTask(SubTask subTask) {
         // 1. Xin quyền ghi vào database (mở kho ra)
         SQLiteDatabase db = this.getWritableDatabase();

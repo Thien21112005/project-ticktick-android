@@ -5,6 +5,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -24,6 +26,8 @@ public class Next7DaysFragment extends Fragment {
     private RecyclerView recyclerView;
     private TaskAdapter taskAdapter;
     private DatabaseHelper databaseHelper;
+
+    private List<SubTask> original7DaysTasks = new ArrayList<>();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -91,6 +95,25 @@ public class Next7DaysFragment extends Fragment {
             }
         });
         recyclerView.setAdapter(taskAdapter);
+
+        // Ánh xạ nút gạt
+        SwitchCompat switchFilter = view.findViewById(R.id.switch_filter_done);
+
+        // Lưu lại giỏ gốc
+        original7DaysTasks.addAll(next7DaysTasks);
+
+        // Bắt sự kiện gạt nút
+        switchFilter.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            List<SubTask> filteredTasks = new ArrayList<>();
+            if (isChecked) {
+                for (SubTask task : original7DaysTasks) {
+                    if (task.isDone()) filteredTasks.add(task);
+                }
+            } else {
+                filteredTasks.addAll(original7DaysTasks);
+            }
+            taskAdapter.updateList(filteredTasks);
+        });
 
         return view;
     }

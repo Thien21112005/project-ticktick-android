@@ -4,6 +4,8 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -23,6 +25,9 @@ public class TasksFragment extends Fragment {
     private TaskAdapter taskAdapter;
     private DatabaseHelper databaseHelper;
 
+    // Khai báo một biến để giữ cái "giỏ gốc" (Toàn bộ việc hôm nay)
+    private List<SubTask> originalTodayTasks = new ArrayList<>();
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_tasks, container, false);
@@ -35,6 +40,9 @@ public class TasksFragment extends Fragment {
         recyclerView = view.findViewById(R.id.recycler_tasks);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         databaseHelper = new DatabaseHelper(getContext());
+
+        // Ánh xạ cái nút gạt từ giao diện
+        SwitchCompat switchFilter = view.findViewById(R.id.switch_filter_done);
 
         // 1. Lấy TẤT CẢ công việc từ kho
         List<SubTask> allSubTasks = databaseHelper.getAllSubTasksWithCategory();
@@ -65,6 +73,27 @@ public class TasksFragment extends Fragment {
             }
         });
         recyclerView.setAdapter(taskAdapter);
+
+        // Lắng nghe sự kiện khi người dùng búng tay gạt nút
+        switchFilter.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            // Tạo một cái giỏ tạm để chứa kết quả lọc
+            List<SubTask> filteredTasks = new ArrayList<>();
+
+            if (isChecked) {
+                // NẾU BẬT NÚT (true): Chỉ lấy những việc đã đánh dấu tick
+                for (SubTask task : originalTodayTasks) {
+                    if (task.isDone()) { // Hàm isDone() kiểm tra xem đã xong chưa [cite: 59]
+                        filteredTasks.add(task); // Xong rồi thì nhặt vào giỏ tạm
+                    }
+                }
+            } else {
+                // NẾU TẮT NÚT (false): Lấy lại toàn bộ từ giỏ gốc
+                filteredTasks.addAll(originalTodayTasks);
+            }
+
+            // Đưa giỏ tạm cho Adapter và bảo nó vẽ lại màn hình (gọi hàm ở Bước 2)
+            taskAdapter.updateList(filteredTasks);
+        });
 
         return view;
     }

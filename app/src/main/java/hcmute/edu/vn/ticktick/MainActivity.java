@@ -284,6 +284,7 @@ public class MainActivity extends AppCompatActivity {
                 WorkManagerScheduler.scheduleNotification(MainActivity.this, newSubTask); // <-- LÊN LỊCH NHẮC
                 Toast.makeText(this, "Đã thêm công việc!", Toast.LENGTH_SHORT).show();
                 dialog.dismiss();
+                openSelectedContent();
 
             } else {
                 Toast.makeText(this, "Lỗi khi lưu vào Database!", Toast.LENGTH_SHORT).show();

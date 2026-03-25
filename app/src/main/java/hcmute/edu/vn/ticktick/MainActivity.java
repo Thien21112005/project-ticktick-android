@@ -45,7 +45,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         NotificationHelper.createNotificationChannel(this);
 
-        // Xin quyền POST_NOTIFICATIONS (bắt buộc Android 13+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
                     != android.content.pm.PackageManager.PERMISSION_GRANTED) {
@@ -54,7 +53,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        // Xin quyền đặt alarm chính xác (bắt buộc Android 12+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
             if (am != null && !am.canScheduleExactAlarms()) {
@@ -152,8 +150,34 @@ public class MainActivity extends AppCompatActivity {
         DatabaseHelper db = new DatabaseHelper(this);
         List<Task> allTasks = db.getAllTasks();
 
+        // Nếu chưa có list nào → mở dialog tạo list trước, sau đó tự mở lại dialog task
         if (allTasks.isEmpty()) {
-            Toast.makeText(this, "Vui lòng tạo Danh mục (Lists) ở Menu trước!", Toast.LENGTH_LONG).show();
+            Dialog listDialog = new Dialog(this);
+            listDialog.setContentView(R.layout.dialog_add_list);
+            listDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            listDialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+            EditText edtName = listDialog.findViewById(R.id.edt_list_name);
+            Button btnSaveList = listDialog.findViewById(R.id.btn_save_list);
+
+            btnSaveList.setOnClickListener(v -> {
+                String name = edtName.getText().toString().trim();
+                if (name.isEmpty()) {
+                    Toast.makeText(this, "Vui lòng nhập tên danh mục!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                Task newTask = new Task();
+                newTask.setTitle(name);
+                long result = db.addTask(newTask);
+                if (result != -1) {
+                    Toast.makeText(this, "Đã tạo danh mục! Giờ thêm công việc nào.", Toast.LENGTH_SHORT).show();
+                    listDialog.dismiss();
+                    refreshMenuFragment();
+                    showAddTaskDialog(); // Mở lại dialog thêm task
+                }
+            });
+
+            listDialog.show();
             return;
         }
 
@@ -220,6 +244,7 @@ public class MainActivity extends AppCompatActivity {
                 AlarmScheduler.scheduleNotification(MainActivity.this, newSubTask);
                 Toast.makeText(this, "Đã thêm công việc!", Toast.LENGTH_SHORT).show();
                 dialog.dismiss();
+                openSelectedContent(); // Reload fragment hiện tại ngay lập tức
             } else {
                 Toast.makeText(this, "Lỗi khi lưu vào Database!", Toast.LENGTH_SHORT).show();
             }
@@ -230,9 +255,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void showDatePicker(TextView textView) {
         java.util.Calendar calendar = java.util.Calendar.getInstance();
-        android.app.DatePickerDialog datePicker = new android.app.DatePickerDialog(this, (view, y, m, d) -> {
-            textView.setText(String.format(Locale.getDefault(), "%02d/%02d/%04d", d, m + 1, y));
-        },
+        android.app.DatePickerDialog datePicker = new android.app.DatePickerDialog(this, (view, y, m, d) ->
+                textView.setText(String.format(Locale.getDefault(), "%02d/%02d/%04d", d, m + 1, y)),
                 calendar.get(java.util.Calendar.YEAR),
                 calendar.get(java.util.Calendar.MONTH),
                 calendar.get(java.util.Calendar.DAY_OF_MONTH));
@@ -346,7 +370,6 @@ public class MainActivity extends AppCompatActivity {
             }
 
             db.updateSubTask(subTask);
-
             AlarmScheduler.cancelNotification(this, subTask.getId());
             AlarmScheduler.scheduleNotification(this, subTask);
 

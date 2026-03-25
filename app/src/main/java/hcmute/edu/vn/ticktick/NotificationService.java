@@ -1,6 +1,7 @@
 package hcmute.edu.vn.ticktick;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
 import androidx.annotation.Nullable;
@@ -21,6 +22,7 @@ public class NotificationService extends Service {
             // Phải gọi startForeground ngay lập tức trên Android 8+
             // Dùng luôn notification của task làm foreground notification
             android.app.Notification notification = buildForegroundNotification(title, message);
+            wakeUpScreen();
             startForeground(subtaskId != 0 ? subtaskId : 9999, notification);
 
             // Gửi thông báo ongoing (với nút Tắt) như cũ
@@ -46,5 +48,18 @@ public class NotificationService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return null;
+    }
+    private void wakeUpScreen() {
+        android.os.PowerManager pm = (android.os.PowerManager) getSystemService(Context.POWER_SERVICE);
+        if (pm == null) return;
+
+        android.os.PowerManager.WakeLock wakeLock = pm.newWakeLock(
+                android.os.PowerManager.SCREEN_BRIGHT_WAKE_LOCK
+                        | android.os.PowerManager.ACQUIRE_CAUSES_WAKEUP
+                        | android.os.PowerManager.ON_AFTER_RELEASE,
+                "TickTick:ReminderWakeLock"
+        );
+
+        wakeLock.acquire(5000); // Giữ màn hình sáng 5 giây rồi tự thả
     }
 }

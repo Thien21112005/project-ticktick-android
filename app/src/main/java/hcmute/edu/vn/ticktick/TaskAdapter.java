@@ -77,7 +77,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
             holder.cbDone.setVisibility(View.VISIBLE);
             holder.btnEdit.setVisibility(View.VISIBLE);
 
-            // Thiết lập trạng thái Checkbox và sự kiện (giữ nguyên code cũ của bạn)
+            // Thiết lập trạng thái Checkbox và sự kiện
             holder.cbDone.setOnCheckedChangeListener(null);
             holder.cbDone.setChecked(subTask.isDone());
             holder.cbDone.setOnCheckedChangeListener((buttonView, isChecked) -> {

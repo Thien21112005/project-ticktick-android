@@ -37,6 +37,12 @@ public class TasksFragment extends Fragment {
             layoutQuickAdd.setVisibility(View.GONE); // GONE nghĩa là biến mất hoàn toàn
         }
 
+        // Ẩn thanh gạt xem công việc
+        View layoutFilter = view.findViewById(R.id.layout_filter_switch);
+        if (layoutFilter != null) {
+            layoutFilter.setVisibility(View.GONE); // Ẩn thanh gạt đi luôn
+        }
+
         recyclerView = view.findViewById(R.id.recycler_tasks);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         databaseHelper = new DatabaseHelper(getContext());

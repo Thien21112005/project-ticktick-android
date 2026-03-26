@@ -39,6 +39,12 @@ public class Next7DaysFragment extends Fragment {
             layoutQuickAdd.setVisibility(View.GONE);
         }
 
+        // Ẩn thanh gạt xem công việc
+        View layoutFilter = view.findViewById(R.id.layout_filter_switch);
+        if (layoutFilter != null) {
+            layoutFilter.setVisibility(View.GONE); // Ẩn thanh gạt đi luôn
+        }
+
         // 2. Tìm cái "băng chuyền" (RecyclerView) và cài đặt chiều dọc
         recyclerView = view.findViewById(R.id.recycler_tasks);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));

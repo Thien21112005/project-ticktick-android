@@ -33,6 +33,13 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
         this.listener = listener;
     }
 
+    public void updateList(List<SubTask> newList) {
+        // Gán mảng dữ liệu cũ bằng mảng dữ liệu mới đã được lọc
+        this.subTaskList = newList;
+        // Báo cho RecyclerView biết: "Ê, danh sách đổi rồi, vẽ lại màn hình đi!"
+        notifyDataSetChanged();
+    }
+
     // 2. Tạo ra cái khung (Bơm file item_task.xml mới làm ở Bước 1 vào)
     @NonNull
     @Override
@@ -70,7 +77,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
             holder.cbDone.setVisibility(View.VISIBLE);
             holder.btnEdit.setVisibility(View.VISIBLE);
 
-            // Thiết lập trạng thái Checkbox và sự kiện (giữ nguyên code cũ của bạn)
+            // Thiết lập trạng thái Checkbox và sự kiện
             holder.cbDone.setOnCheckedChangeListener(null);
             holder.cbDone.setChecked(subTask.isDone());
             holder.cbDone.setOnCheckedChangeListener((buttonView, isChecked) -> {

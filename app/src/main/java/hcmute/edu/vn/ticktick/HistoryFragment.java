@@ -24,6 +24,12 @@ public class HistoryFragment extends Fragment {
             inputLayout.setVisibility(View.GONE); // Ẩn thanh nhập đi
         }
 
+        // Ẩn thanh gạt xem công việc đã hoàn thành
+        View layoutFilter = view.findViewById(R.id.layout_filter_switch);
+        if (layoutFilter != null) {
+            layoutFilter.setVisibility(View.GONE); // Ẩn thanh gạt đi
+        }
+
         RecyclerView recyclerView = view.findViewById(R.id.recycler_tasks);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 

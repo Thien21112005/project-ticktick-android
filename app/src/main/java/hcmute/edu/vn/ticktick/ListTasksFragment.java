@@ -8,11 +8,14 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
+
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -31,6 +34,9 @@ public class ListTasksFragment extends Fragment {
     private DatabaseHelper databaseHelper;
     private EditText edtQuickTask;
 
+    private List<SubTask> originalListTasks = new ArrayList<>();
+    private SwitchCompat switchFilter;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_tasks, container, false);
@@ -48,6 +54,11 @@ public class ListTasksFragment extends Fragment {
 
         edtQuickTask = view.findViewById(R.id.edt_quick_task_title);
         ImageView btnQuickAdd = view.findViewById(R.id.btn_quick_add);
+
+        switchFilter = view.findViewById(R.id.switch_filter_done);
+        switchFilter.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            applyFilter();
+        });
 
         // 3. Tải danh sách công việc lần đầu tiên lên màn hình
         loadTasksToScreen();
@@ -94,18 +105,31 @@ public class ListTasksFragment extends Fragment {
 
     // Viết một hàm riêng để Tải dữ liệu, giúp code gọn và dễ tái sử dụng
     private void loadTasksToScreen() {
-        // Lấy danh sách từ kho dựa theo ID
-        List<SubTask> subTasks = databaseHelper.getSubTasksByTaskId(taskId);
-        // Gắn vào Adapter
-        TaskAdapter taskAdapter = new TaskAdapter(subTasks, false, new TaskAdapter.OnTaskEditListener() {
+        originalListTasks = databaseHelper.getSubTasksByTaskId(taskId);
+        taskAdapter = new TaskAdapter(originalListTasks, false, new TaskAdapter.OnTaskEditListener() {
             @Override
             public void onEditClick(SubTask subTask) {
-                // Kiểm tra xem Tổng đài có đang hoạt động không, nếu có thì gọi hàm showEditSubTaskDialog
                 if (getActivity() instanceof MainActivity) {
                     ((MainActivity) getActivity()).showEditSubTaskDialog(subTask);
                 }
             }
         });
         recyclerView.setAdapter(taskAdapter);
+
+        // --> CHÈN THÊM DÒNG NÀY: Lọc lại giao diện sau khi tải
+        applyFilter();
+    }
+    private void applyFilter() {
+        if (taskAdapter == null) return;
+        List<SubTask> filteredTasks = new ArrayList<>();
+
+        if (switchFilter != null && switchFilter.isChecked()) {
+            for (SubTask task : originalListTasks) {
+                if (task.isDone()) filteredTasks.add(task);
+            }
+        } else {
+            filteredTasks.addAll(originalListTasks);
+        }
+        taskAdapter.updateList(filteredTasks);
     }
 }

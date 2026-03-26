@@ -1,11 +1,14 @@
 package hcmute.edu.vn.ticktick;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,17 +39,16 @@ public class ProfileFragment extends Fragment {
     private static final String KEY_USERNAME = "username";
     private static final String KEY_EMAIL = "email";
     private static final String KEY_JOIN_DATE = "join_date";
+    private static final String KEY_RINGTONE_URI = "ringtone_uri";
     private static final String AVATAR_FILE_NAME = "profile_avatar.jpg";
 
     private ShapeableImageView imgAvatar;
-
-    private TextView tvUsernameDisplay, tvEmailDisplay, tvJoinDate, tvCompletedTasks;
+    private TextView tvUsernameDisplay, tvEmailDisplay, tvJoinDate, tvCompletedTasks, tvSelectedRingtone;
     private EditText edtUsername, edtEmail;
+    private Button btnChangeRingtone;
 
     private SharedPreferences prefs;
     private ActivityResultLauncher<String> pickImageLauncher;
-
-
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -77,6 +79,8 @@ public class ProfileFragment extends Fragment {
         edtEmail = view.findViewById(R.id.edt_email);
         tvJoinDate = view.findViewById(R.id.tv_join_date);
         tvCompletedTasks = view.findViewById(R.id.tv_completed_tasks);
+        tvSelectedRingtone = view.findViewById(R.id.tv_selected_ringtone);
+        btnChangeRingtone = view.findViewById(R.id.btn_change_ringtone);
 
         loadProfileData();
 
@@ -95,6 +99,10 @@ public class ProfileFragment extends Fragment {
         // Đổi avatar
         imgAvatar.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
         view.findViewById(R.id.btn_change_avatar).setOnClickListener(v -> pickImageLauncher.launch("image/*"));
+
+        // Chọn nhạc thông báo
+        loadSelectedRingtone();
+        btnChangeRingtone.setOnClickListener(v -> pickRingtone());
     }
 
     private void handleSelectedImage(Uri uri) {
@@ -105,10 +113,6 @@ public class ProfileFragment extends Fragment {
             Toast.makeText(requireContext(), "Đã cập nhật ảnh đại diện", Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
             Toast.makeText(requireContext(), "Không thể lưu ảnh", Toast.LENGTH_SHORT).show();
-        }
-        if (getActivity() instanceof MainActivity) {
-            MainActivity main = (MainActivity) getActivity();
-            // Gọi refresh menu nếu cần (sẽ làm ở bước sau)
         }
     }
 
@@ -162,10 +166,6 @@ public class ProfileFragment extends Fragment {
         InputMethodManager imm = (InputMethodManager) requireContext()
                 .getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(edt.getWindowToken(), 0);
-        if (getActivity() instanceof MainActivity) {
-            MainActivity main = (MainActivity) getActivity();
-            // Gọi refresh menu nếu cần (sẽ làm ở bước sau)
-        }
     }
 
     private void loadProfileData() {
@@ -186,16 +186,69 @@ public class ProfileFragment extends Fragment {
 
         loadAvatarFromFile();
 
-        // 1. Gọi DatabaseHelper
         hcmute.edu.vn.ticktick.database.DatabaseHelper dbHelper =
                 new hcmute.edu.vn.ticktick.database.DatabaseHelper(requireContext());
 
         java.util.List<hcmute.edu.vn.ticktick.models.SubTask> completedTasks = dbHelper.getCompletedSubTasks();
-
-        // 3. Đếm số lượng task đã hoàn thành
         int totalCompleted = completedTasks.size();
-
-        // 4. In con số vừa đếm được lên màn hình
         tvCompletedTasks.setText(String.valueOf(totalCompleted));
+    }
+
+    // ======================= PHẦN XỬ LÝ NHẠC THÔNG BÁO =======================
+
+    private void loadSelectedRingtone() {
+        String uriString = prefs.getString(KEY_RINGTONE_URI, null);
+        if (uriString == null) {
+            tvSelectedRingtone.setText("Mặc định");
+            return;
+        }
+        try {
+            Uri uri = Uri.parse(uriString);
+            String fileName = getFileNameFromUri(uri);
+            tvSelectedRingtone.setText(fileName != null ? fileName : "Tùy chỉnh");
+        } catch (Exception e) {
+            tvSelectedRingtone.setText("Mặc định");
+        }
+    }
+
+    private void pickRingtone() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("audio/*");
+        startActivityForResult(intent, 1001);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1001 && resultCode == Activity.RESULT_OK && data != null) {
+            Uri uri = data.getData();
+            if (uri != null) {
+                final int takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION;
+                requireContext().getContentResolver().takePersistableUriPermission(uri, takeFlags);
+
+                prefs.edit().putString(KEY_RINGTONE_URI, uri.toString()).apply();
+                loadSelectedRingtone();
+
+                // Cập nhật channel ngay
+                NotificationHelper.updateNotificationChannel(requireContext(), uri);
+
+                Toast.makeText(getContext(), "Đã chọn nhạc thông báo", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private String getFileNameFromUri(Uri uri) {
+        String fileName = null;
+        try (android.database.Cursor cursor = requireContext().getContentResolver()
+                .query(uri, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                fileName = cursor.getString(nameIndex);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return fileName;
     }
 }

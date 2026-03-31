@@ -11,4 +11,9 @@
     <color name="menu_bg">#0A4B99</color>
     <color name="nav_bottom_stroke">#166AA3</color>
     <color name="nav_bottom_bg">#70045496</color>
+
+    <!-- Màu pastel mới -->
+    <color name="pastel_blue">#87CEEB</color>      <!-- Xanh dương nhạt -->
+    <color name="pastel_green">#C1FFC1</color>    <!-- Xanh lá nhạt (tuỳ chọn) -->
+    <color name="pastel_blue_dark">#6AB0D6</color> <!-- Đậm hơn một chút -->
 </resources>
